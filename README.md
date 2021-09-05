@@ -8,7 +8,7 @@ First, add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-css-color = "0.1"
+css-color = "0.2"
 ```
 
 ### Example
