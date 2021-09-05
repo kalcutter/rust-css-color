@@ -1,10 +1,9 @@
 #![cfg_attr(feature = "bench", feature(test))]
 
 use lazy_static::lazy_static;
-use lexical;
 use std::collections::HashMap;
 use std::f32;
-use std::str::FromStr;
+use std::str::{self, FromStr};
 
 /// A color with RGBA components, represented as floats.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -264,7 +263,10 @@ fn parse_number(input: &[u8]) -> Result<(&[u8], f32), ()> {
     let pos = input.len() - consume_number(input)?.len();
     Ok((
         &input[pos..],
-        lexical::try_parse::<f32, _>(&input[..pos]).map_err(|_| ())?,
+        str::from_utf8(&input[..pos])
+            .unwrap()
+            .parse()
+            .map_err(|_| ())?,
     ))
 }
 
