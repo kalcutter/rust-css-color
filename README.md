@@ -26,6 +26,10 @@ fn main() {
 }
 ```
 
+## Supported Rust Versions
+
+The minimum supported Rust version is 1.55. Earlier versions may compile but parsing can reject certain valid numeric values.
+
 ## License
 
 [license]: #license
