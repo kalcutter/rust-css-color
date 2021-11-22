@@ -1,4 +1,4 @@
-use super::{Rgba, NAMED_COLORS, NAMED_COLORS_MAX_LENGTH};
+use super::Rgba;
 use std::str::FromStr;
 
 #[cfg(feature = "bench")]
@@ -12,18 +12,6 @@ fn readme_examples() {
     assert_eq!(lime, "rgb(0% 100% 0%)".parse().unwrap());
     assert_eq!(lime, "hsl(120deg 100% 50% / 100%)".parse().unwrap());
     assert_eq!(lime, "lime".parse().unwrap());
-}
-
-#[test]
-fn check_named_colors() {
-    assert!(
-        NAMED_COLORS.keys().all(|k| k.to_ascii_lowercase() == *k),
-        "NAMED_COLORS must be given in ASCII lowercase"
-    );
-    assert_eq!(
-        NAMED_COLORS.keys().map(|k| k.len()).max().unwrap(),
-        NAMED_COLORS_MAX_LENGTH
-    );
 }
 
 #[test]
