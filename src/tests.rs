@@ -4,6 +4,17 @@ use std::str::FromStr;
 #[cfg(feature = "bench")]
 extern crate test;
 
+/// The precision to use for tests.
+const COLOR_EPSILON: f32 = 0.005 / 100.;
+
+#[track_caller]
+fn assert_color_approx_eq(lhs: Rgba, rhs: Rgba) {
+    assert!((lhs.red - rhs.red).abs() <= COLOR_EPSILON);
+    assert!((lhs.green - rhs.green).abs() <= COLOR_EPSILON);
+    assert!((lhs.blue - rhs.blue).abs() <= COLOR_EPSILON);
+    assert!((lhs.alpha - rhs.alpha).abs() <= COLOR_EPSILON);
+}
+
 #[test]
 fn readme_examples() {
     let lime = Rgba::new(0., 1., 0., 1.);
@@ -16,39 +27,90 @@ fn readme_examples() {
 
 #[test]
 fn color4_spec_examples() {
-    // EXAMPLE 1
-    assert!(Rgba::from_str("lime").is_ok());
-    assert!(Rgba::from_str("rgb(0 255 0)").is_ok());
-    assert!(Rgba::from_str("rgb(0% 100% 0%)").is_ok());
-
-    // EXAMPLE 2
+    // https://www.w3.org/TR/css-color-4/
+    // EXAMPLE 4
+    let lime = Rgba::from_str("lime").unwrap();
+    assert_eq!(lime, Rgba::from_str("rgb(0 255 0)").unwrap());
+    assert_eq!(lime, Rgba::from_str("rgb(0% 100% 0%)").unwrap());
+    // EXAMPLE 5
+    assert_eq!(
+        Rgba::from_str("HsL(39 100% 50%)").unwrap(),
+        Rgba::from_str("hsl(39 100% 50%)").unwrap(),
+    );
+    assert_eq!(
+        Rgba::from_str("pUrPlE").unwrap(),
+        Rgba::from_str("purple").unwrap(),
+    );
+    // EXAMPLE 6
+    assert_color_approx_eq(
+        Rgba::from_str("hsl(38.824 100% 50%)").unwrap(),
+        Rgba::from_str("rgb(255, 165, 0)").unwrap(),
+    );
+    // EXAMPLE 12
+    assert_eq!(
+        Rgba::from_str("rgb(29 164 192 / 95%)").unwrap(),
+        Rgba::from_str("rgba(29, 164, 192, 0.95)").unwrap(),
+    );
+    // EXAMPLE 13
+    assert_color_approx_eq(
+        Rgba::from_str("rgb(146.064 107.457 131.223)").unwrap(),
+        Rgba::from_str("rgb(57.28% 42.14% 51.46%)").unwrap(),
+    );
+    // EXAMPLE 14
+    assert_eq!(
+        Rgba::from_str("goldenrod").unwrap(),
+        Rgba::from_str("rgb(218, 165, 32)").unwrap(),
+    );
+    // EXAMPLE 24
     assert_eq!(
         Rgba::from_str("#00ff00").unwrap(),
-        Rgba::from_str("rgb(0 255 0)").unwrap()
+        Rgba::from_str("rgb(0 255 0)").unwrap(),
     );
-
-    // EXAMPLE 3
+    // EXAMPLE 25
     assert_eq!(
         Rgba::from_str("#0000ffcc").unwrap(),
-        Rgba::from_str("rgb(0% 0% 100% / 80%)").unwrap()
+        Rgba::from_str("rgb(0% 0% 100% / 80%)").unwrap(),
     );
-
-    // EXAMPLE 4
+    // EXAMPLE 26
     assert_eq!(
         Rgba::from_str("#123").unwrap(),
-        Rgba::from_str("#112233").unwrap()
+        Rgba::from_str("#112233").unwrap(),
     );
-
-    // EXAMPLE 7
+    // EXAMPLE 31
     let red = Rgba::from_str("red").unwrap();
     assert_eq!(red, Rgba::from_str("#f00").unwrap());
     assert_eq!(red, Rgba::from_str("hsl(0deg 100% 50%)").unwrap());
-
-    // EXAMPLE 8
+    // EXAMPLE 32
     assert!(Rgba::from_str("hsl(120deg 100% 50%)").is_ok());
     assert!(Rgba::from_str("hsl(120deg 100% 25%)").is_ok());
     assert!(Rgba::from_str("hsl(120deg 100% 75%)").is_ok());
     assert!(Rgba::from_str("hsl(120deg 75% 85%)").is_ok());
+    // EXAMPLE 33
+    assert_eq!(
+        Rgba::from_str("blue").unwrap(),
+        Rgba::from_str("hsl(240deg 100% 50%)").unwrap(),
+    );
+    assert_eq!(
+        Rgba::from_str("yellow").unwrap(),
+        Rgba::from_str("hsl(60deg 100% 50%)").unwrap(),
+    );
+    // EXAMPLE 34
+    assert!(Rgba::from_str("hsl(220deg 100% 50%)").is_ok());
+    assert!(Rgba::from_str("hsl(250deg 100% 50%)").is_ok());
+    assert!(Rgba::from_str("hsl(50deg 100% 50%)").is_ok());
+    assert!(Rgba::from_str("hsl(80deg 100% 50%)").is_ok());
+    // EXAMPLE 40
+    assert_color_approx_eq(
+        Rgba::from_str("#7654CD").unwrap(),
+        Rgba::from_str("rgb(46.27% 32.94% 80.39%)").unwrap(),
+    );
+    // EXAMPLE 47
+    assert_eq!(
+        Rgba::from_str("rgb(178 34 34)").unwrap(),
+        Rgba::from_str("firebrick").unwrap(),
+    );
+    // EXAMPLE 48
+    assert!(Rgba::from_str("rgb(70.690% 26.851% 19.724%)").is_ok());
 }
 
 #[test]
