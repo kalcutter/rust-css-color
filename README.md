@@ -1,6 +1,11 @@
 # css-color
 
-Parse color strings from [CSS Color Module Level 4](https://www.w3.org/TR/css-color-4/).
+Parse color strings from [CSS Color Module Level 4](https://www.w3.org/TR/css-color-4/). All legacy sRGB forms are supported:
+* RGB hexadecimal notation
+* Named colors including `transparent`
+* `rgb()` and `rgba()` functions
+* `hsl()` and `hsla()` functions
+* `hwb()` function
 
 ## Usage
 
@@ -22,6 +27,7 @@ fn main() {
     assert_eq!(lime, "rgb(0 255 0)".parse().unwrap());
     assert_eq!(lime, "rgb(0% 100% 0%)".parse().unwrap());
     assert_eq!(lime, "hsl(120deg 100% 50% / 100%)".parse().unwrap());
+    assert_eq!(lime, "hwb(120 0% 0% / 1)".parse().unwrap());
     assert_eq!(lime, "lime".parse().unwrap());
 }
 ```

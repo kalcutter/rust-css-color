@@ -22,6 +22,7 @@ fn readme_examples() {
     assert_eq!(lime, "rgb(0 255 0)".parse().unwrap());
     assert_eq!(lime, "rgb(0% 100% 0%)".parse().unwrap());
     assert_eq!(lime, "hsl(120deg 100% 50% / 100%)".parse().unwrap());
+    assert_eq!(lime, "hwb(120 0% 0% / 1)".parse().unwrap());
     assert_eq!(lime, "lime".parse().unwrap());
 }
 
@@ -736,6 +737,16 @@ fn bench_rgb_exp(b: &mut test::Bencher) {
 #[bench]
 fn bench_hsl(b: &mut test::Bencher) {
     let input = "hsl(0deg 100% 50% / 1.0)";
+    b.iter(|| {
+        let result = Srgb::from_str(test::black_box(&input));
+        let _ = test::black_box(result);
+    })
+}
+
+#[cfg(feature = "bench")]
+#[bench]
+fn bench_hwb(b: &mut test::Bencher) {
+    let input = "hwb(0deg 0% 0% / 1.0)";
     b.iter(|| {
         let result = Srgb::from_str(test::black_box(&input));
         let _ = test::black_box(result);

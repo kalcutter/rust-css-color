@@ -68,6 +68,8 @@ fn parse_css_color(input: &[u8]) -> Result<Srgb, ()> {
         parse_hsl(input)
     } else if let Ok(input) = expect_function(input, b"hsla") {
         parse_hsl(input)
+    } else if let Ok(input) = expect_function(input, b"hwb") {
+        parse_hwb(input)
     } else {
         parse_named(input)
     }
@@ -88,6 +90,7 @@ struct Hsla {
     pub alpha: f32,
 }
 
+// https://www.w3.org/TR/css-color-4/#hsl-to-rgb
 impl From<Hsla> for Srgb {
     fn from(hsla: Hsla) -> Self {
         let t2 = if hsla.lightness <= 0.5 {
@@ -116,6 +119,52 @@ impl From<Hsla> for Srgb {
             green: hue_to_rgb(h6),
             blue: hue_to_rgb(h6_blue),
             alpha: hsla.alpha,
+        }
+    }
+}
+
+struct Hwba {
+    pub hue: f32,
+    pub whiteness: f32,
+    pub blackness: f32,
+    pub alpha: f32,
+}
+
+// https://www.w3.org/TR/css-color-4/#hwb-to-rgb
+impl From<Hwba> for Srgb {
+    fn from(hwba: Hwba) -> Self {
+        // If the sum of these two arguments is greater than 100%, then at computed-value time they
+        // are further normalized to add up to 100%, with the same relative ratio.
+        if hwba.whiteness + hwba.blackness >= 1. {
+            let gray = hwba.whiteness / (hwba.whiteness + hwba.blackness);
+            Srgb {
+                red: gray,
+                green: gray,
+                blue: gray,
+                alpha: hwba.alpha,
+            }
+        } else {
+            fn hue_to_rgb(h6: f32) -> f32 {
+                if h6 < 1. {
+                    h6
+                } else if h6 < 3. {
+                    1.
+                } else if h6 < 4. {
+                    4. - h6
+                } else {
+                    0.
+                }
+            }
+            let h6 = hwba.hue * 6.;
+            let h6_red = if h6 + 2. < 6. { h6 + 2. } else { h6 - 4. };
+            let h6_blue = if h6 - 2. >= 0. { h6 - 2. } else { h6 + 4. };
+            let x = 1. - hwba.whiteness - hwba.blackness;
+            Srgb {
+                red: hue_to_rgb(h6_red) * x + hwba.whiteness,
+                green: hue_to_rgb(h6) * x + hwba.whiteness,
+                blue: hue_to_rgb(h6_blue) * x + hwba.whiteness,
+                alpha: hwba.alpha,
+            }
         }
     }
 }
@@ -383,6 +432,40 @@ fn parse_hsl(input: &[u8]) -> Result<Srgb, ()> {
         hue: normalize_hue(hue),
         saturation: clamp_unit_f32(saturation),
         lightness: clamp_unit_f32(lightness),
+        alpha,
+    }))
+}
+
+// hwb() = hwb( <hue> <percentage> <percentage> [ / <alpha-value> ]? )
+fn parse_hwb(input: &[u8]) -> Result<Srgb, ()> {
+    let input = skip_whitespace(input);
+    let (input, hue) = parse_hue(input)?;
+
+    let input = skip_whitespace(input);
+    let (input, whiteness) = parse_percentage(input)?;
+
+    let input = skip_whitespace(input);
+    let (input, blackness) = parse_percentage(input)?;
+
+    let input = skip_whitespace(input);
+    let (input, alpha) = match input.get(0) {
+        Some(b'/') => {
+            let input = skip_whitespace(&input[1..]);
+            let (input, alpha) = parse_alpha_value(input)?;
+            let input = skip_whitespace(input);
+            (input, alpha)
+        }
+        _ => (input, 1.),
+    };
+
+    if input != b")" {
+        return Err(());
+    }
+
+    Ok(Srgb::from(Hwba {
+        hue: normalize_hue(hue),
+        whiteness: clamp_unit_f32(whiteness),
+        blackness: clamp_unit_f32(blackness),
         alpha,
     }))
 }
