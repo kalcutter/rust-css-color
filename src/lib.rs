@@ -56,7 +56,7 @@ fn parse_css_color(input: &[u8]) -> Result<Rgba, ()> {
     if input.is_empty() {
         Err(())
     } else if let Ok(input) = expect_byte(input, b'#') {
-        parse_hash(input)
+        parse_hex(input)
     } else if let Ok(input) = expect_function(input, b"rgb") {
         parse_rgb(input)
     } else if let Ok(input) = expect_function(input, b"rgba") {
@@ -323,8 +323,8 @@ fn parse_hue(input: &[u8]) -> Result<(&[u8], f32), ()> {
     }
 }
 
-/// Parse RGB hexadecimal colors.
-fn parse_hash(input: &[u8]) -> Result<Rgba, ()> {
+/// Parse sRGB hex colors.
+fn parse_hex(input: &[u8]) -> Result<Rgba, ()> {
     match input.len() {
         8 => Ok(Rgba::from_rgba8(
             hexdigit(input[0])? * 16 + hexdigit(input[1])?,

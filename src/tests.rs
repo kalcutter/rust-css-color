@@ -52,7 +52,7 @@ fn color4_spec_examples() {
 }
 
 #[test]
-fn hash() {
+fn hex() {
     assert!(Rgba::from_str("#").is_err());
     assert!(Rgba::from_str("#f").is_err());
     assert!(Rgba::from_str("#ff").is_err());
@@ -620,7 +620,7 @@ fn css_parsing_tests_color3_keywords() {
 
 #[cfg(feature = "bench")]
 #[bench]
-fn bench_hash(b: &mut test::Bencher) {
+fn bench_hex(b: &mut test::Bencher) {
     let input = "#00000000";
     b.iter(|| {
         let result = Rgba::from_str(test::black_box(&input));
