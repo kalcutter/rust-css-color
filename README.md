@@ -14,10 +14,10 @@ css-color = "0.2"
 ### Example
 
 ```rust
-use css_color::Rgba;
+use css_color::Srgb;
 
 fn main() {
-    let lime = Rgba::new(0., 1., 0., 1.);
+    let lime = Srgb::new(0., 1., 0., 1.);
     assert_eq!(lime, "#0f0".parse().unwrap());
     assert_eq!(lime, "rgb(0 255 0)".parse().unwrap());
     assert_eq!(lime, "rgb(0% 100% 0%)".parse().unwrap());

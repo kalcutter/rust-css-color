@@ -3,9 +3,12 @@
 use std::f32;
 use std::str::{self, FromStr};
 
-/// A color with RGBA components, represented as floats.
+#[doc(hidden)]
+pub type Rgba = Srgb;
+
+/// A color in the sRGB color space.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Rgba {
+pub struct Srgb {
     /// The red component.
     pub red: f32,
     /// The green component.
@@ -16,9 +19,9 @@ pub struct Rgba {
     pub alpha: f32,
 }
 
-impl Rgba {
-    pub fn new(red: f32, green: f32, blue: f32, alpha: f32) -> Rgba {
-        Rgba {
+impl Srgb {
+    pub fn new(red: f32, green: f32, blue: f32, alpha: f32) -> Srgb {
+        Srgb {
             red,
             green,
             blue,
@@ -26,12 +29,12 @@ impl Rgba {
         }
     }
 
-    fn from_rgb8(red: u8, green: u8, blue: u8) -> Rgba {
-        Rgba::from_rgba8(red, green, blue, 255)
+    fn from_rgb8(red: u8, green: u8, blue: u8) -> Srgb {
+        Srgb::from_rgba8(red, green, blue, 255)
     }
 
-    fn from_rgba8(red: u8, green: u8, blue: u8, alpha: u8) -> Rgba {
-        Rgba {
+    fn from_rgba8(red: u8, green: u8, blue: u8, alpha: u8) -> Srgb {
+        Srgb {
             red: red as f32 / 255.,
             green: green as f32 / 255.,
             blue: blue as f32 / 255.,
@@ -43,7 +46,7 @@ impl Rgba {
 #[derive(Debug)]
 pub struct ParseColorError;
 
-impl FromStr for Rgba {
+impl FromStr for Srgb {
     type Err = ParseColorError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -52,7 +55,7 @@ impl FromStr for Rgba {
 }
 
 // https://www.w3.org/TR/css-color-4/
-fn parse_css_color(input: &[u8]) -> Result<Rgba, ()> {
+fn parse_css_color(input: &[u8]) -> Result<Srgb, ()> {
     if input.is_empty() {
         Err(())
     } else if let Ok(input) = expect_byte(input, b'#') {
@@ -87,7 +90,7 @@ struct Hsla {
     pub alpha: f32,
 }
 
-impl From<Hsla> for Rgba {
+impl From<Hsla> for Srgb {
     fn from(hsla: Hsla) -> Self {
         let t2 = if hsla.lightness <= 0.5 {
             hsla.lightness * (hsla.saturation + 1.)
@@ -114,7 +117,7 @@ impl From<Hsla> for Rgba {
                 t1
             }
         }
-        Rgba {
+        Srgb {
             red: hue_to_rgb(t1, t2, h6 + 2.),
             green: hue_to_rgb(t1, t2, h6),
             blue: hue_to_rgb(t1, t2, h6 - 2.),
@@ -324,26 +327,26 @@ fn parse_hue(input: &[u8]) -> Result<(&[u8], f32), ()> {
 }
 
 /// Parse sRGB hex colors.
-fn parse_hex(input: &[u8]) -> Result<Rgba, ()> {
+fn parse_hex(input: &[u8]) -> Result<Srgb, ()> {
     match input.len() {
-        8 => Ok(Rgba::from_rgba8(
+        8 => Ok(Srgb::from_rgba8(
             hexdigit(input[0])? * 16 + hexdigit(input[1])?,
             hexdigit(input[2])? * 16 + hexdigit(input[3])?,
             hexdigit(input[4])? * 16 + hexdigit(input[5])?,
             hexdigit(input[6])? * 16 + hexdigit(input[7])?,
         )),
-        6 => Ok(Rgba::from_rgb8(
+        6 => Ok(Srgb::from_rgb8(
             hexdigit(input[0])? * 16 + hexdigit(input[1])?,
             hexdigit(input[2])? * 16 + hexdigit(input[3])?,
             hexdigit(input[4])? * 16 + hexdigit(input[5])?,
         )),
-        4 => Ok(Rgba::from_rgba8(
+        4 => Ok(Srgb::from_rgba8(
             hexdigit(input[0])? * 17,
             hexdigit(input[1])? * 17,
             hexdigit(input[2])? * 17,
             hexdigit(input[3])? * 17,
         )),
-        3 => Ok(Rgba::from_rgb8(
+        3 => Ok(Srgb::from_rgb8(
             hexdigit(input[0])? * 17,
             hexdigit(input[1])? * 17,
             hexdigit(input[2])? * 17,
@@ -354,7 +357,7 @@ fn parse_hex(input: &[u8]) -> Result<Rgba, ()> {
 
 // hsl() = hsl( <hue> <percentage> <percentage> [ / <alpha-value> ]? )
 //         hsl( <hue>, <percentage>, <percentage> [ , <alpha-value> ]? )
-fn parse_hsl(input: &[u8]) -> Result<Rgba, ()> {
+fn parse_hsl(input: &[u8]) -> Result<Srgb, ()> {
     let input = skip_whitespace(input);
     let (input, hue) = parse_hue(input)?;
 
@@ -391,7 +394,7 @@ fn parse_hsl(input: &[u8]) -> Result<Rgba, ()> {
         return Err(());
     }
 
-    Ok(Rgba::from(Hsla {
+    Ok(Srgb::from(Hsla {
         hue: normalize_hue(hue),
         saturation: clamp_unit_f32(saturation),
         lightness: clamp_unit_f32(lightness),
@@ -403,7 +406,7 @@ fn parse_hsl(input: &[u8]) -> Result<Rgba, ()> {
 //         rgb( <number>{3} [ / <alpha-value> ]? )
 //         rgb( <percentage>#{3} [ , <alpha-value> ]? )
 //         rgb( <number>#{3} [ , <alpha-value> ]? )
-fn parse_rgb(input: &[u8]) -> Result<Rgba, ()> {
+fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
     let input = skip_whitespace(input);
     let (input, red) = parse_number_or_percentage(input)?;
 
@@ -459,7 +462,7 @@ fn parse_rgb(input: &[u8]) -> Result<Rgba, ()> {
         return Err(());
     }
 
-    Ok(Rgba::new(
+    Ok(Srgb::new(
         clamp_unit_f32(red),
         clamp_unit_f32(green),
         clamp_unit_f32(blue),
@@ -469,11 +472,11 @@ fn parse_rgb(input: &[u8]) -> Result<Rgba, ()> {
 
 macro_rules! rgb {
     ($red: expr, $green: expr, $blue: expr) => {
-        Rgba::from_rgb8($red, $green, $blue)
+        Srgb::from_rgb8($red, $green, $blue)
     };
 }
 
-fn parse_named(input: &[u8]) -> Result<Rgba, ()> {
+fn parse_named(input: &[u8]) -> Result<Srgb, ()> {
     const NAMED_MAX_LEN: usize = 20;
     if input.len() > NAMED_MAX_LEN {
         return Err(());
@@ -632,7 +635,7 @@ fn parse_named(input: &[u8]) -> Result<Rgba, ()> {
         b"whitesmoke" => rgb!(245, 245, 245),
         b"yellow" => rgb!(255, 255, 0),
         b"yellowgreen" => rgb!(154, 205, 50),
-        b"transparent" => Rgba::new(0.0, 0.0, 0.0, 0.0),
+        b"transparent" => Srgb::new(0., 0., 0., 0.),
         _ => return Err(()),
     })
 }
