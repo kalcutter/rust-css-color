@@ -98,15 +98,8 @@ impl From<Hsla> for Srgb {
             hsla.lightness + hsla.saturation - hsla.lightness * hsla.saturation
         };
         let t1 = hsla.lightness * 2. - t2;
-        let h6 = hsla.hue * 6.;
 
-        fn hue_to_rgb(t1: f32, t2: f32, mut h6: f32) -> f32 {
-            if h6 < 0. {
-                h6 += 6.;
-            } else if h6 >= 6. {
-                h6 -= 6.;
-            }
-
+        let hue_to_rgb = |h6: f32| -> f32 {
             if h6 < 1. {
                 (t2 - t1) * h6 + t1
             } else if h6 < 3. {
@@ -116,11 +109,14 @@ impl From<Hsla> for Srgb {
             } else {
                 t1
             }
-        }
+        };
+        let h6 = hsla.hue * 6.;
+        let h6_red = if h6 + 2. < 6. { h6 + 2. } else { h6 - 4. };
+        let h6_blue = if h6 - 2. >= 0. { h6 - 2. } else { h6 + 4. };
         Srgb {
-            red: hue_to_rgb(t1, t2, h6 + 2.),
-            green: hue_to_rgb(t1, t2, h6),
-            blue: hue_to_rgb(t1, t2, h6 - 2.),
+            red: hue_to_rgb(h6_red),
+            green: hue_to_rgb(h6),
+            blue: hue_to_rgb(h6_blue),
             alpha: hsla.alpha,
         }
     }
