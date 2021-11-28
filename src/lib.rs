@@ -73,12 +73,10 @@ fn parse_css_color(input: &[u8]) -> Result<Srgb, ()> {
     }
 }
 
-#[inline]
 fn clamp_unit_f32(value: f32) -> f32 {
     value.max(0.).min(1.)
 }
 
-#[inline]
 fn normalize_hue(value: f32) -> f32 {
     value - value.floor()
 }
@@ -122,7 +120,6 @@ impl From<Hsla> for Srgb {
     }
 }
 
-#[inline]
 fn is_ident_start(input: &[u8]) -> bool {
     match input.get(0) {
         Some(b'-') => match input.get(1) {
@@ -135,7 +132,6 @@ fn is_ident_start(input: &[u8]) -> bool {
     }
 }
 
-#[inline]
 fn is_name_start(c: u8) -> bool {
     match c {
         b'a'..=b'z' | b'A'..=b'Z' | b'_' => true,
@@ -143,7 +139,6 @@ fn is_name_start(c: u8) -> bool {
     }
 }
 
-#[inline]
 fn is_name(c: u8) -> bool {
     match c {
         b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'_' | b'-' => true,
@@ -151,12 +146,10 @@ fn is_name(c: u8) -> bool {
     }
 }
 
-#[inline]
 fn is_whitespace(c: u8) -> bool {
     c <= b' ' && (c == b' ' || c == b'\n' || c == b'\t' || c == b'\r' || c == b'\x0C')
 }
 
-#[inline]
 fn digit(c: u8) -> Result<u8, ()> {
     match c {
         b'0'..=b'9' => Ok(c - b'0'),
@@ -164,7 +157,6 @@ fn digit(c: u8) -> Result<u8, ()> {
     }
 }
 
-#[inline]
 fn hexdigit(c: u8) -> Result<u8, ()> {
     match c {
         b'0'..=b'9' => Ok(c - b'0'),
@@ -174,7 +166,6 @@ fn hexdigit(c: u8) -> Result<u8, ()> {
     }
 }
 
-#[inline]
 fn expect_byte(input: &[u8], b: u8) -> Result<&[u8], ()> {
     match input.get(0) {
         Some(c) if *c == b => Ok(&input[1..]),
@@ -182,7 +173,6 @@ fn expect_byte(input: &[u8], b: u8) -> Result<&[u8], ()> {
     }
 }
 
-#[inline]
 fn expect_function<'a>(input: &'a [u8], name: &[u8]) -> Result<&'a [u8], ()> {
     debug_assert!(is_ident_start(name));
 
@@ -248,7 +238,6 @@ fn consume_number(mut input: &[u8]) -> Result<&[u8], ()> {
     Ok(input)
 }
 
-#[inline]
 fn skip_whitespace(mut input: &[u8]) -> &[u8] {
     while input.len() > 0 && is_whitespace(input[0]) {
         input = &input[1..];
