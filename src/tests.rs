@@ -703,6 +703,11 @@ fn css_parsing_tests_color3_keywords() {
     run_color_test(include_str!("tests/css-parsing-tests/color3_keywords.json"));
 }
 
+#[test]
+fn css_parsing_tests_color4_hwb() {
+    run_color_test(include_str!("tests/css-parsing-tests/color4_hwb.json"));
+}
+
 #[cfg(feature = "bench")]
 #[bench]
 fn bench_hex(b: &mut test::Bencher) {
@@ -831,9 +836,7 @@ fn run_color_test(json: &str) {
                 assert_eq!(components.2, color_f32_to_u8(color.blue));
                 assert_eq!(components.3, color_f32_to_u8(color.alpha));
             }
-            _ => {
-                panic!("Bad test case");
-            }
+            _ => panic!("Bad test case"),
         }
     }
 }
