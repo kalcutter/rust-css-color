@@ -184,14 +184,14 @@ fn is_ident_start(input: &[u8]) -> bool {
 fn is_name_start(c: u8) -> bool {
     match c {
         b'a'..=b'z' | b'A'..=b'Z' | b'_' => true,
-        c => !c.is_ascii() || c == b'\0',
+        c => !c.is_ascii(),
     }
 }
 
 fn is_name(c: u8) -> bool {
     match c {
         b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'_' | b'-' => true,
-        c => !c.is_ascii() || c == b'\0',
+        c => !c.is_ascii(),
     }
 }
 
