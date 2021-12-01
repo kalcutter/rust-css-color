@@ -688,24 +688,72 @@ fn overflow() {
     );
 }
 
-#[test]
-fn css_parsing_tests_color3() {
-    run_color_test(include_str!("tests/css-parsing-tests/color3.json"));
-}
+// https://github.com/servo/rust-cssparser/tree/v0.29.1/src/css-parsing-tests
+mod css_parsing_tests {
+    use crate::Srgb;
+    use std::str::FromStr;
 
-#[test]
-fn css_parsing_tests_color3_hsl() {
-    run_color_test(include_str!("tests/css-parsing-tests/color3_hsl.json"));
-}
+    fn color_f32_to_u8(value: f32) -> u8 {
+        (value * 255.).round().max(0.).min(255.) as u8
+    }
 
-#[test]
-fn css_parsing_tests_color3_keywords() {
-    run_color_test(include_str!("tests/css-parsing-tests/color3_keywords.json"));
-}
+    fn run_color_test(json: &str) {
+        let json: Vec<serde_json::Value> = serde_json::from_str(json).unwrap();
+        for (input, expected) in json
+            .chunks(2)
+            .map(|named| (named[0].as_str().unwrap(), &named[1]))
+        {
+            // Don't accept CSS comments or escapes, leading or trailing whitespace, or "currentcolor".
+            if input.contains("/*")
+                || input.contains("\\")
+                || input
+                    != input.trim_matches(|c: char| c.is_ascii() && crate::is_whitespace(c as u8))
+                || input.eq_ignore_ascii_case("currentcolor")
+            {
+                assert!(Srgb::from_str(input).is_err());
+                continue;
+            }
+            match expected {
+                serde_json::Value::Null => {
+                    assert!(Srgb::from_str(input).is_err());
+                }
+                serde_json::Value::Array(components) => {
+                    let color = Srgb::from_str(input).unwrap();
+                    let components = (
+                        components[0].as_u64().unwrap() as u8,
+                        components[1].as_u64().unwrap() as u8,
+                        components[2].as_u64().unwrap() as u8,
+                        components[3].as_u64().unwrap() as u8,
+                    );
+                    assert_eq!(components.0, color_f32_to_u8(color.red));
+                    assert_eq!(components.1, color_f32_to_u8(color.green));
+                    assert_eq!(components.2, color_f32_to_u8(color.blue));
+                    assert_eq!(components.3, color_f32_to_u8(color.alpha));
+                }
+                _ => unimplemented!("json value: {}", expected),
+            }
+        }
+    }
 
-#[test]
-fn css_parsing_tests_color4_hwb() {
-    run_color_test(include_str!("tests/css-parsing-tests/color4_hwb.json"));
+    #[test]
+    fn color3() {
+        run_color_test(include_str!("tests/css-parsing-tests/color3.json"));
+    }
+
+    #[test]
+    fn color3_hsl() {
+        run_color_test(include_str!("tests/css-parsing-tests/color3_hsl.json"));
+    }
+
+    #[test]
+    fn color3_keywords() {
+        run_color_test(include_str!("tests/css-parsing-tests/color3_keywords.json"));
+    }
+
+    #[test]
+    fn color4_hwb() {
+        run_color_test(include_str!("tests/css-parsing-tests/color4_hwb.json"));
+    }
 }
 
 #[cfg(feature = "bench")]
@@ -780,10 +828,6 @@ fn bench_named_all(b: &mut test::Bencher) {
     })
 }
 
-fn color_f32_to_u8(value: f32) -> u8 {
-    (value * 255.).round().max(0.).min(255.) as u8
-}
-
 fn named_colors() -> Vec<(String, Srgb)> {
     let named_colors: Vec<serde_json::Value> =
         serde_json::from_str(include_str!("tests/named_colors.json")).unwrap();
@@ -802,41 +846,4 @@ fn named_colors() -> Vec<(String, Srgb)> {
         .collect();
     result.push(("transparent".to_string(), Srgb::from_rgba8(0, 0, 0, 0)));
     result
-}
-
-fn run_color_test(json: &str) {
-    let json: Vec<serde_json::Value> = serde_json::from_str(json).unwrap();
-    for (input, expected) in json
-        .chunks(2)
-        .map(|named| (named[0].as_str().unwrap(), &named[1]))
-    {
-        // Don't accept CSS comments or escapes, leading or trailing whitespace, or "currentcolor".
-        if input.contains("/*")
-            || input.contains("\\")
-            || input != input.trim_matches(|c: char| c.is_ascii() && super::is_whitespace(c as u8))
-            || input.eq_ignore_ascii_case("currentcolor")
-        {
-            assert!(Srgb::from_str(input).is_err());
-            continue;
-        }
-        match expected {
-            serde_json::Value::Null => {
-                assert!(Srgb::from_str(input).is_err());
-            }
-            serde_json::Value::Array(components) => {
-                let color = Srgb::from_str(input).unwrap();
-                let components = (
-                    components[0].as_u64().unwrap() as u8,
-                    components[1].as_u64().unwrap() as u8,
-                    components[2].as_u64().unwrap() as u8,
-                    components[3].as_u64().unwrap() as u8,
-                );
-                assert_eq!(components.0, color_f32_to_u8(color.red));
-                assert_eq!(components.1, color_f32_to_u8(color.green));
-                assert_eq!(components.2, color_f32_to_u8(color.blue));
-                assert_eq!(components.3, color_f32_to_u8(color.alpha));
-            }
-            _ => panic!("Bad test case"),
-        }
-    }
 }
