@@ -1,3 +1,5 @@
+mod web_platform_tests;
+
 use crate::{Rgba, Srgb};
 use std::str::FromStr;
 
@@ -13,6 +15,10 @@ fn assert_color_approx_eq(lhs: Srgb, rhs: Srgb) {
     assert!((lhs.green - rhs.green).abs() <= COLOR_EPSILON);
     assert!((lhs.blue - rhs.blue).abs() <= COLOR_EPSILON);
     assert!((lhs.alpha - rhs.alpha).abs() <= COLOR_EPSILON);
+}
+
+fn color_f32_to_u8(value: f32) -> u8 {
+    (value * 255.).round().max(0.).min(255.) as u8
 }
 
 #[test]
@@ -690,12 +696,9 @@ fn overflow() {
 
 // https://github.com/servo/rust-cssparser/tree/v0.29.1/src/css-parsing-tests
 mod css_parsing_tests {
+    use super::color_f32_to_u8;
     use crate::Srgb;
     use std::str::FromStr;
-
-    fn color_f32_to_u8(value: f32) -> u8 {
-        (value * 255.).round().max(0.).min(255.) as u8
-    }
 
     fn run_color_test(json: &str) {
         let json: Vec<serde_json::Value> = serde_json::from_str(json).unwrap();
