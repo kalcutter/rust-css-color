@@ -3,6 +3,8 @@
 use std::f32;
 use std::str::{self, FromStr};
 
+const NONE: f32 = 0_f32;
+
 #[doc(hidden)]
 pub type Rgba = Srgb;
 
@@ -215,6 +217,13 @@ fn hexdigit(c: u8) -> Result<u8, ()> {
     }
 }
 
+fn skip_ws(mut input: &[u8]) -> &[u8] {
+    while input.len() > 0 && is_whitespace(input[0]) {
+        input = &input[1..];
+    }
+    input
+}
+
 fn expect_byte(input: &[u8], b: u8) -> Result<&[u8], ()> {
     match input.get(0) {
         Some(c) if *c == b => Ok(&input[1..]),
@@ -246,6 +255,10 @@ fn expect_name<'a>(input: &'a [u8], name: &[u8]) -> Result<&'a [u8], ()> {
     } else {
         Err(())
     }
+}
+
+fn expect_none(input: &[u8]) -> Result<&[u8], ()> {
+    expect_name(input, b"none")
 }
 
 fn consume_number(mut input: &[u8]) -> Result<&[u8], ()> {
@@ -285,13 +298,6 @@ fn consume_number(mut input: &[u8]) -> Result<&[u8], ()> {
         _ => {}
     }
     Ok(input)
-}
-
-fn skip_whitespace(mut input: &[u8]) -> &[u8] {
-    while input.len() > 0 && is_whitespace(input[0]) {
-        input = &input[1..];
-    }
-    input
 }
 
 fn parse_number(input: &[u8]) -> Result<(&[u8], f32), ()> {
@@ -389,39 +395,53 @@ fn parse_hex(input: &[u8]) -> Result<Srgb, ()> {
     }
 }
 
-// hsl() = hsl( <hue> <percentage> <percentage> [ / <alpha-value> ]? )
+// hsl() = hsl( [<hue> | none] [<percentage> | none] [<percentage> | none] [ / [<alpha-value> | none] ]? ) |
 //         hsl( <hue>, <percentage>, <percentage> [ , <alpha-value> ]? )
 fn parse_hsl(input: &[u8]) -> Result<Srgb, ()> {
-    let input = skip_whitespace(input);
-    let (input, hue) = parse_hue(input)?;
+    let input = skip_ws(input);
 
-    let input = skip_whitespace(input);
-    let (input, legacy_syntax) = match input.get(0) {
-        Some(b',') => (skip_whitespace(&input[1..]), true),
-        _ => (input, false),
-    };
-    let (input, saturation) = parse_percentage(input)?;
-
-    let mut input = skip_whitespace(input);
-    if legacy_syntax {
-        input = expect_byte(input, b',')?;
-        input = skip_whitespace(input);
-    }
-    let (input, lightness) = parse_percentage(input)?;
-
-    let input = skip_whitespace(input);
-    let (input, has_alpha) = match input.get(0) {
-        Some(b',') if legacy_syntax => (&input[1..], true),
-        Some(b'/') if !legacy_syntax => (&input[1..], true),
-        _ => (input, false),
-    };
-    let input = skip_whitespace(input);
-    let (input, alpha) = if has_alpha {
-        let (input, alpha) = parse_alpha_value(input)?;
-        let input = skip_whitespace(input);
-        (input, alpha)
+    let (input, hue, legacy_syntax) = if let Ok((input, hue)) = parse_hue(input) {
+        let input = skip_ws(input);
+        match input.get(0) {
+            Some(b',') => (skip_ws(&input[1..]), hue, true),
+            _ => (input, hue, false),
+        }
     } else {
-        (input, 1.)
+        (skip_ws(expect_none(input)?), NONE, false)
+    };
+
+    let (mut input, saturation) = if let Ok((input, saturation)) = parse_percentage(input) {
+        (skip_ws(input), saturation)
+    } else if !legacy_syntax {
+        (skip_ws(expect_none(input)?), NONE)
+    } else {
+        return Err(());
+    };
+
+    if legacy_syntax {
+        input = skip_ws(expect_byte(input, b',')?);
+    }
+
+    let (input, lightness) = if let Ok((input, lightness)) = parse_percentage(input) {
+        (skip_ws(input), lightness)
+    } else if !legacy_syntax {
+        (skip_ws(expect_none(input)?), NONE)
+    } else {
+        return Err(());
+    };
+
+    let (input, alpha) = match (input.get(0), legacy_syntax) {
+        (Some(b'/'), false) | (Some(b','), true) => {
+            let input = skip_ws(&input[1..]);
+            if let Ok((input, alpha)) = parse_alpha_value(input) {
+                (skip_ws(input), alpha)
+            } else if !legacy_syntax {
+                (skip_ws(expect_none(input)?), NONE)
+            } else {
+                return Err(());
+            }
+        }
+        _ => (input, 1.),
     };
 
     if input != b")" {
@@ -436,24 +456,36 @@ fn parse_hsl(input: &[u8]) -> Result<Srgb, ()> {
     }))
 }
 
-// hwb() = hwb( <hue> <percentage> <percentage> [ / <alpha-value> ]? )
+// hwb() = hwb( [<hue> | none] [<percentage> | none] [<percentage> | none] [ / [<alpha-value> | none] ]? )
 fn parse_hwb(input: &[u8]) -> Result<Srgb, ()> {
-    let input = skip_whitespace(input);
-    let (input, hue) = parse_hue(input)?;
+    let input = skip_ws(input);
 
-    let input = skip_whitespace(input);
-    let (input, whiteness) = parse_percentage(input)?;
+    let (input, hue) = if let Ok((input, hue)) = parse_hue(input) {
+        (skip_ws(input), hue)
+    } else {
+        (skip_ws(expect_none(input)?), NONE)
+    };
 
-    let input = skip_whitespace(input);
-    let (input, blackness) = parse_percentage(input)?;
+    let (input, whiteness) = if let Ok((input, whiteness)) = parse_percentage(input) {
+        (skip_ws(input), whiteness)
+    } else {
+        (skip_ws(expect_none(input)?), NONE)
+    };
 
-    let input = skip_whitespace(input);
+    let (input, blackness) = if let Ok((input, blackness)) = parse_percentage(input) {
+        (skip_ws(input), blackness)
+    } else {
+        (skip_ws(expect_none(input)?), NONE)
+    };
+
     let (input, alpha) = match input.get(0) {
         Some(b'/') => {
-            let input = skip_whitespace(&input[1..]);
-            let (input, alpha) = parse_alpha_value(input)?;
-            let input = skip_whitespace(input);
-            (input, alpha)
+            let input = skip_ws(&input[1..]);
+            if let Ok((input, alpha)) = parse_alpha_value(input) {
+                (skip_ws(input), alpha)
+            } else {
+                (skip_ws(expect_none(input)?), NONE)
+            }
         }
         _ => (input, 1.),
     };
@@ -470,60 +502,111 @@ fn parse_hwb(input: &[u8]) -> Result<Srgb, ()> {
     }))
 }
 
-// rgb() = rgb( <percentage>{3} [ / <alpha-value> ]? )
-//         rgb( <number>{3} [ / <alpha-value> ]? )
-//         rgb( <percentage>#{3} [ , <alpha-value> ]? )
-//         rgb( <number>#{3} [ , <alpha-value> ]? )
+// rgb() = rgb( [<percentage> | none]{3} [ / [<alpha-value> | none] ]? ) |
+//         rgb( [<number>     | none]{3} [ / [<alpha-value> | none] ]? ) |
+//         rgb( <percentage>#{3} [ , <alpha-value> ]? )                  |
+//         rgb( <number>#{3}     [ , <alpha-value> ]? )
 fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
-    let input = skip_whitespace(input);
-    let (input, red) = parse_number_or_percentage(input)?;
+    let input = skip_ws(input);
 
-    let input = skip_whitespace(input);
-    let (input, legacy_syntax) = match input.get(0) {
-        Some(b',') => (skip_whitespace(&input[1..]), true),
-        _ => (input, false),
+    let (input, red, legacy_syntax) = if let Ok((input, red)) = parse_number_or_percentage(input) {
+        let input = skip_ws(input);
+        match input.get(0) {
+            Some(b',') => (skip_ws(&input[1..]), Some(red), true),
+            _ => (input, Some(red), false),
+        }
+    } else {
+        (skip_ws(expect_none(input)?), None, false)
     };
 
     let (input, red, green, blue) = match red {
-        Number(red) => {
-            let (input, green) = parse_number(input)?;
-
-            let mut input = skip_whitespace(input);
+        Some(Number(red)) => {
+            let red = red / 255.;
+            let (mut input, green) = if let Ok((input, green)) = parse_number(input) {
+                (skip_ws(input), green / 255.)
+            } else if !legacy_syntax {
+                (skip_ws(expect_none(input)?), NONE)
+            } else {
+                return Err(());
+            };
             if legacy_syntax {
-                input = expect_byte(input, b',')?;
-                input = skip_whitespace(input);
+                input = skip_ws(expect_byte(input, b',')?);
             }
-            let (input, blue) = parse_number(input)?;
-
-            (input, red / 255., green / 255., blue / 255.)
-        }
-        Percentage(red) => {
-            let (input, green) = parse_percentage(input)?;
-
-            let mut input = skip_whitespace(input);
-            if legacy_syntax {
-                input = expect_byte(input, b',')?;
-                input = skip_whitespace(input);
-            }
-            let (input, blue) = parse_percentage(input)?;
-
+            let (input, blue) = if let Ok((input, blue)) = parse_number(input) {
+                (skip_ws(input), blue / 255.)
+            } else if !legacy_syntax {
+                (skip_ws(expect_none(input)?), NONE)
+            } else {
+                return Err(());
+            };
             (input, red, green, blue)
         }
+        Some(Percentage(red)) => {
+            let (mut input, green) = if let Ok((input, green)) = parse_percentage(input) {
+                (skip_ws(input), green)
+            } else if !legacy_syntax {
+                (skip_ws(expect_none(input)?), NONE)
+            } else {
+                return Err(());
+            };
+            if legacy_syntax {
+                input = skip_ws(expect_byte(input, b',')?);
+            }
+            let (input, blue) = if let Ok((input, blue)) = parse_percentage(input) {
+                (skip_ws(input), blue)
+            } else if !legacy_syntax {
+                (skip_ws(expect_none(input)?), NONE)
+            } else {
+                return Err(());
+            };
+            (input, red, green, blue)
+        }
+        None => {
+            if let Ok((input, green)) = parse_number_or_percentage(input) {
+                let input = skip_ws(input);
+                match green {
+                    Number(green) => {
+                        if let Ok((input, blue)) = parse_number(input) {
+                            (skip_ws(input), NONE, green / 255., blue / 255.)
+                        } else {
+                            (skip_ws(expect_none(input)?), NONE, green / 255., NONE)
+                        }
+                    }
+                    Percentage(green) => {
+                        if let Ok((input, blue)) = parse_percentage(input) {
+                            (skip_ws(input), NONE, green, blue)
+                        } else {
+                            (skip_ws(expect_none(input)?), NONE, green, NONE)
+                        }
+                    }
+                }
+            } else {
+                let input = skip_ws(expect_none(input)?);
+                if let Ok((input, blue)) = parse_number_or_percentage(input) {
+                    let blue = match blue {
+                        Number(blue) => blue / 255.,
+                        Percentage(blue) => blue,
+                    };
+                    (skip_ws(input), NONE, NONE, blue)
+                } else {
+                    (skip_ws(expect_none(input)?), NONE, NONE, NONE)
+                }
+            }
+        }
     };
 
-    let input = skip_whitespace(input);
-    let (input, has_alpha) = match input.get(0) {
-        Some(b',') if legacy_syntax => (&input[1..], true),
-        Some(b'/') if !legacy_syntax => (&input[1..], true),
-        _ => (input, false),
-    };
-    let input = skip_whitespace(input);
-    let (input, alpha) = if has_alpha {
-        let (input, alpha) = parse_alpha_value(input)?;
-        let input = skip_whitespace(input);
-        (input, alpha)
-    } else {
-        (input, 1.)
+    let (input, alpha) = match (input.get(0), legacy_syntax) {
+        (Some(b'/'), false) | (Some(b','), true) => {
+            let input = skip_ws(&input[1..]);
+            if let Ok((input, alpha)) = parse_alpha_value(input) {
+                (skip_ws(input), alpha)
+            } else if !legacy_syntax {
+                (skip_ws(expect_none(input)?), NONE)
+            } else {
+                return Err(());
+            }
+        }
+        _ => (input, 1.),
     };
 
     if input != b")" {
