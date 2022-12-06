@@ -396,14 +396,14 @@ fn parse_hsl(input: &[u8]) -> Result<Srgb, ()> {
     let (input, hue) = parse_hue(input)?;
 
     let input = skip_whitespace(input);
-    let (input, uses_commas) = match input.get(0) {
+    let (input, legacy_syntax) = match input.get(0) {
         Some(b',') => (skip_whitespace(&input[1..]), true),
         _ => (input, false),
     };
     let (input, saturation) = parse_percentage(input)?;
 
     let mut input = skip_whitespace(input);
-    if uses_commas {
+    if legacy_syntax {
         input = expect_byte(input, b',')?;
         input = skip_whitespace(input);
     }
@@ -411,8 +411,8 @@ fn parse_hsl(input: &[u8]) -> Result<Srgb, ()> {
 
     let input = skip_whitespace(input);
     let (input, has_alpha) = match input.get(0) {
-        Some(b',') if uses_commas => (&input[1..], true),
-        Some(b'/') if !uses_commas => (&input[1..], true),
+        Some(b',') if legacy_syntax => (&input[1..], true),
+        Some(b'/') if !legacy_syntax => (&input[1..], true),
         _ => (input, false),
     };
     let input = skip_whitespace(input);
@@ -479,7 +479,7 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
     let (input, red) = parse_number_or_percentage(input)?;
 
     let input = skip_whitespace(input);
-    let (input, uses_commas) = match input.get(0) {
+    let (input, legacy_syntax) = match input.get(0) {
         Some(b',') => (skip_whitespace(&input[1..]), true),
         _ => (input, false),
     };
@@ -489,7 +489,7 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
             let (input, green) = parse_number(input)?;
 
             let mut input = skip_whitespace(input);
-            if uses_commas {
+            if legacy_syntax {
                 input = expect_byte(input, b',')?;
                 input = skip_whitespace(input);
             }
@@ -501,7 +501,7 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
             let (input, green) = parse_percentage(input)?;
 
             let mut input = skip_whitespace(input);
-            if uses_commas {
+            if legacy_syntax {
                 input = expect_byte(input, b',')?;
                 input = skip_whitespace(input);
             }
@@ -513,8 +513,8 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
 
     let input = skip_whitespace(input);
     let (input, has_alpha) = match input.get(0) {
-        Some(b',') if uses_commas => (&input[1..], true),
-        Some(b'/') if !uses_commas => (&input[1..], true),
+        Some(b',') if legacy_syntax => (&input[1..], true),
+        Some(b'/') if !legacy_syntax => (&input[1..], true),
         _ => (input, false),
     };
     let input = skip_whitespace(input);
