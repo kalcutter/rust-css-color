@@ -1,3 +1,6 @@
+#![allow(clippy::get_first)]
+#![allow(clippy::int_plus_one)]
+#![allow(clippy::len_zero)]
 #![cfg_attr(feature = "bench", feature(test))]
 
 use std::f32;

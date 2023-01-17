@@ -18,7 +18,7 @@ fn assert_color_approx_eq(lhs: Srgb, rhs: Srgb) {
 }
 
 fn color_f32_to_u8(value: f32) -> u8 {
-    (value * 255.).round().max(0.).min(255.) as u8
+    (value * 255.).round().clamp(0., 255.) as u8
 }
 
 #[test]
@@ -708,7 +708,7 @@ mod css_parsing_tests {
         {
             // Don't accept CSS comments or escapes, leading or trailing whitespace, or "currentcolor".
             if input.contains("/*")
-                || input.contains("\\")
+                || input.contains('\\')
                 || input
                     != input.trim_matches(|c: char| c.is_ascii() && crate::is_whitespace(c as u8))
                 || input.eq_ignore_ascii_case("currentcolor")
