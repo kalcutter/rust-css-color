@@ -60,17 +60,17 @@ impl FromStr for Srgb {
 fn parse_css_color(input: &[u8]) -> Result<Srgb, ()> {
     if input.is_empty() {
         Err(())
-    } else if let Ok(input) = expect_byte(input, b'#') {
+    } else if let Ok(input) = consume_byte(input, b'#') {
         parse_hex(input)
-    } else if let Ok(input) = expect_function(input, b"rgb") {
+    } else if let Ok(input) = consume_function(input, b"rgb") {
         parse_rgb(input)
-    } else if let Ok(input) = expect_function(input, b"rgba") {
+    } else if let Ok(input) = consume_function(input, b"rgba") {
         parse_rgb(input)
-    } else if let Ok(input) = expect_function(input, b"hsl") {
+    } else if let Ok(input) = consume_function(input, b"hsl") {
         parse_hsl(input)
-    } else if let Ok(input) = expect_function(input, b"hsla") {
+    } else if let Ok(input) = consume_function(input, b"hsla") {
         parse_hsl(input)
-    } else if let Ok(input) = expect_function(input, b"hwb") {
+    } else if let Ok(input) = consume_function(input, b"hwb") {
         parse_hwb(input)
     } else {
         parse_named(input)
@@ -208,7 +208,7 @@ fn digit(c: u8) -> Result<u8, ()> {
     }
 }
 
-fn hexdigit(c: u8) -> Result<u8, ()> {
+fn hex_digit(c: u8) -> Result<u8, ()> {
     match c {
         b'0'..=b'9' => Ok(c - b'0'),
         b'A'..=b'F' => Ok(c - b'A' + 10),
@@ -224,14 +224,14 @@ fn skip_ws(mut input: &[u8]) -> &[u8] {
     input
 }
 
-fn expect_byte(input: &[u8], b: u8) -> Result<&[u8], ()> {
+fn consume_byte(input: &[u8], b: u8) -> Result<&[u8], ()> {
     match input.get(0) {
         Some(c) if *c == b => Ok(&input[1..]),
         _ => Err(()),
     }
 }
 
-fn expect_function<'a>(input: &'a [u8], name: &[u8]) -> Result<&'a [u8], ()> {
+fn consume_function<'a>(input: &'a [u8], name: &[u8]) -> Result<&'a [u8], ()> {
     debug_assert!(is_ident_start(name));
 
     let n = name.len();
@@ -243,7 +243,7 @@ fn expect_function<'a>(input: &'a [u8], name: &[u8]) -> Result<&'a [u8], ()> {
 }
 
 #[inline]
-fn expect_name<'a>(input: &'a [u8], name: &[u8]) -> Result<&'a [u8], ()> {
+fn consume_name<'a>(input: &'a [u8], name: &[u8]) -> Result<&'a [u8], ()> {
     debug_assert!(is_ident_start(name));
 
     let n = name.len();
@@ -257,8 +257,8 @@ fn expect_name<'a>(input: &'a [u8], name: &[u8]) -> Result<&'a [u8], ()> {
     }
 }
 
-fn expect_none(input: &[u8]) -> Result<&[u8], ()> {
-    expect_name(input, b"none")
+fn consume_none(input: &[u8]) -> Result<&[u8], ()> {
+    consume_name(input, b"none")
 }
 
 fn consume_number(mut input: &[u8]) -> Result<&[u8], ()> {
@@ -268,7 +268,7 @@ fn consume_number(mut input: &[u8]) -> Result<&[u8], ()> {
             _ => input,
         }
     }
-    fn consume_integer(mut input: &[u8]) -> Result<&[u8], ()> {
+    fn consume_digits(mut input: &[u8]) -> Result<&[u8], ()> {
         match input.get(0).map(|c| digit(*c)) {
             Some(Ok(_)) => {
                 while let Some(Ok(_)) = input.get(0).map(|c| digit(*c)) {
@@ -284,16 +284,16 @@ fn consume_number(mut input: &[u8]) -> Result<&[u8], ()> {
     match input.get(0) {
         Some(b'.') => {}
         _ => {
-            input = consume_integer(input)?;
+            input = consume_digits(input)?;
         }
     }
     if let Some(b'.') = input.get(0) {
-        input = consume_integer(&input[1..])?;
+        input = consume_digits(&input[1..])?;
     }
     match input.get(0) {
         Some(b'E') | Some(b'e') => {
             input = skip_sign(&input[1..]);
-            input = consume_integer(input)?;
+            input = consume_digits(input)?;
         }
         _ => {}
     }
@@ -314,7 +314,7 @@ fn parse_number(input: &[u8]) -> Result<(&[u8], f32), ()> {
 // <percentage> = <number> %
 fn parse_percentage(input: &[u8]) -> Result<(&[u8], f32), ()> {
     let (input, value) = parse_number(input)?;
-    let input = expect_byte(input, b'%')?;
+    let input = consume_byte(input, b'%')?;
 
     Ok((input, value / 100.))
 }
@@ -328,7 +328,7 @@ use self::NumberOrPercentage::*;
 fn parse_number_or_percentage(input: &[u8]) -> Result<(&[u8], NumberOrPercentage), ()> {
     let (input, value) = parse_number(input)?;
 
-    if let Ok(input) = expect_byte(input, b'%') {
+    if let Ok(input) = consume_byte(input, b'%') {
         Ok((input, Percentage(value / 100.)))
     } else {
         Ok((input, Number(value)))
@@ -353,13 +353,13 @@ fn parse_hue(input: &[u8]) -> Result<(&[u8], f32), ()> {
 
     if !is_ident_start(input) {
         Ok((input, value / 360.))
-    } else if let Ok(input) = expect_name(input, b"deg") {
+    } else if let Ok(input) = consume_name(input, b"deg") {
         Ok((input, value / 360.))
-    } else if let Ok(input) = expect_name(input, b"grad") {
+    } else if let Ok(input) = consume_name(input, b"grad") {
         Ok((input, value / 400.))
-    } else if let Ok(input) = expect_name(input, b"rad") {
+    } else if let Ok(input) = consume_name(input, b"rad") {
         Ok((input, value / (2. * f32::consts::PI)))
-    } else if let Ok(input) = expect_name(input, b"turn") {
+    } else if let Ok(input) = consume_name(input, b"turn") {
         Ok((input, value))
     } else {
         Err(())
@@ -370,26 +370,26 @@ fn parse_hue(input: &[u8]) -> Result<(&[u8], f32), ()> {
 fn parse_hex(input: &[u8]) -> Result<Srgb, ()> {
     match input.len() {
         8 => Ok(Srgb::from_rgba8(
-            hexdigit(input[0])? * 16 + hexdigit(input[1])?,
-            hexdigit(input[2])? * 16 + hexdigit(input[3])?,
-            hexdigit(input[4])? * 16 + hexdigit(input[5])?,
-            hexdigit(input[6])? * 16 + hexdigit(input[7])?,
+            hex_digit(input[0])? * 16 + hex_digit(input[1])?,
+            hex_digit(input[2])? * 16 + hex_digit(input[3])?,
+            hex_digit(input[4])? * 16 + hex_digit(input[5])?,
+            hex_digit(input[6])? * 16 + hex_digit(input[7])?,
         )),
         6 => Ok(Srgb::from_rgb8(
-            hexdigit(input[0])? * 16 + hexdigit(input[1])?,
-            hexdigit(input[2])? * 16 + hexdigit(input[3])?,
-            hexdigit(input[4])? * 16 + hexdigit(input[5])?,
+            hex_digit(input[0])? * 16 + hex_digit(input[1])?,
+            hex_digit(input[2])? * 16 + hex_digit(input[3])?,
+            hex_digit(input[4])? * 16 + hex_digit(input[5])?,
         )),
         4 => Ok(Srgb::from_rgba8(
-            hexdigit(input[0])? * 17,
-            hexdigit(input[1])? * 17,
-            hexdigit(input[2])? * 17,
-            hexdigit(input[3])? * 17,
+            hex_digit(input[0])? * 17,
+            hex_digit(input[1])? * 17,
+            hex_digit(input[2])? * 17,
+            hex_digit(input[3])? * 17,
         )),
         3 => Ok(Srgb::from_rgb8(
-            hexdigit(input[0])? * 17,
-            hexdigit(input[1])? * 17,
-            hexdigit(input[2])? * 17,
+            hex_digit(input[0])? * 17,
+            hex_digit(input[1])? * 17,
+            hex_digit(input[2])? * 17,
         )),
         _ => Err(()),
     }
@@ -407,25 +407,25 @@ fn parse_hsl(input: &[u8]) -> Result<Srgb, ()> {
             _ => (input, hue, false),
         }
     } else {
-        (skip_ws(expect_none(input)?), NONE, false)
+        (skip_ws(consume_none(input)?), NONE, false)
     };
 
     let (mut input, saturation) = if let Ok((input, saturation)) = parse_percentage(input) {
         (skip_ws(input), saturation)
     } else if !legacy_syntax {
-        (skip_ws(expect_none(input)?), NONE)
+        (skip_ws(consume_none(input)?), NONE)
     } else {
         return Err(());
     };
 
     if legacy_syntax {
-        input = skip_ws(expect_byte(input, b',')?);
+        input = skip_ws(consume_byte(input, b',')?);
     }
 
     let (input, lightness) = if let Ok((input, lightness)) = parse_percentage(input) {
         (skip_ws(input), lightness)
     } else if !legacy_syntax {
-        (skip_ws(expect_none(input)?), NONE)
+        (skip_ws(consume_none(input)?), NONE)
     } else {
         return Err(());
     };
@@ -436,7 +436,7 @@ fn parse_hsl(input: &[u8]) -> Result<Srgb, ()> {
             if let Ok((input, alpha)) = parse_alpha_value(input) {
                 (skip_ws(input), alpha)
             } else if !legacy_syntax {
-                (skip_ws(expect_none(input)?), NONE)
+                (skip_ws(consume_none(input)?), NONE)
             } else {
                 return Err(());
             }
@@ -463,19 +463,19 @@ fn parse_hwb(input: &[u8]) -> Result<Srgb, ()> {
     let (input, hue) = if let Ok((input, hue)) = parse_hue(input) {
         (skip_ws(input), hue)
     } else {
-        (skip_ws(expect_none(input)?), NONE)
+        (skip_ws(consume_none(input)?), NONE)
     };
 
     let (input, whiteness) = if let Ok((input, whiteness)) = parse_percentage(input) {
         (skip_ws(input), whiteness)
     } else {
-        (skip_ws(expect_none(input)?), NONE)
+        (skip_ws(consume_none(input)?), NONE)
     };
 
     let (input, blackness) = if let Ok((input, blackness)) = parse_percentage(input) {
         (skip_ws(input), blackness)
     } else {
-        (skip_ws(expect_none(input)?), NONE)
+        (skip_ws(consume_none(input)?), NONE)
     };
 
     let (input, alpha) = match input.get(0) {
@@ -484,7 +484,7 @@ fn parse_hwb(input: &[u8]) -> Result<Srgb, ()> {
             if let Ok((input, alpha)) = parse_alpha_value(input) {
                 (skip_ws(input), alpha)
             } else {
-                (skip_ws(expect_none(input)?), NONE)
+                (skip_ws(consume_none(input)?), NONE)
             }
         }
         _ => (input, 1.),
@@ -516,7 +516,7 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
             _ => (input, Some(red), false),
         }
     } else {
-        (skip_ws(expect_none(input)?), None, false)
+        (skip_ws(consume_none(input)?), None, false)
     };
 
     let (input, red, green, blue) = match red {
@@ -525,17 +525,17 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
             let (mut input, green) = if let Ok((input, green)) = parse_number(input) {
                 (skip_ws(input), green / 255.)
             } else if !legacy_syntax {
-                (skip_ws(expect_none(input)?), NONE)
+                (skip_ws(consume_none(input)?), NONE)
             } else {
                 return Err(());
             };
             if legacy_syntax {
-                input = skip_ws(expect_byte(input, b',')?);
+                input = skip_ws(consume_byte(input, b',')?);
             }
             let (input, blue) = if let Ok((input, blue)) = parse_number(input) {
                 (skip_ws(input), blue / 255.)
             } else if !legacy_syntax {
-                (skip_ws(expect_none(input)?), NONE)
+                (skip_ws(consume_none(input)?), NONE)
             } else {
                 return Err(());
             };
@@ -545,17 +545,17 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
             let (mut input, green) = if let Ok((input, green)) = parse_percentage(input) {
                 (skip_ws(input), green)
             } else if !legacy_syntax {
-                (skip_ws(expect_none(input)?), NONE)
+                (skip_ws(consume_none(input)?), NONE)
             } else {
                 return Err(());
             };
             if legacy_syntax {
-                input = skip_ws(expect_byte(input, b',')?);
+                input = skip_ws(consume_byte(input, b',')?);
             }
             let (input, blue) = if let Ok((input, blue)) = parse_percentage(input) {
                 (skip_ws(input), blue)
             } else if !legacy_syntax {
-                (skip_ws(expect_none(input)?), NONE)
+                (skip_ws(consume_none(input)?), NONE)
             } else {
                 return Err(());
             };
@@ -569,19 +569,19 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
                         if let Ok((input, blue)) = parse_number(input) {
                             (skip_ws(input), NONE, green / 255., blue / 255.)
                         } else {
-                            (skip_ws(expect_none(input)?), NONE, green / 255., NONE)
+                            (skip_ws(consume_none(input)?), NONE, green / 255., NONE)
                         }
                     }
                     Percentage(green) => {
                         if let Ok((input, blue)) = parse_percentage(input) {
                             (skip_ws(input), NONE, green, blue)
                         } else {
-                            (skip_ws(expect_none(input)?), NONE, green, NONE)
+                            (skip_ws(consume_none(input)?), NONE, green, NONE)
                         }
                     }
                 }
             } else {
-                let input = skip_ws(expect_none(input)?);
+                let input = skip_ws(consume_none(input)?);
                 if let Ok((input, blue)) = parse_number_or_percentage(input) {
                     let blue = match blue {
                         Number(blue) => blue / 255.,
@@ -589,7 +589,7 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
                     };
                     (skip_ws(input), NONE, NONE, blue)
                 } else {
-                    (skip_ws(expect_none(input)?), NONE, NONE, NONE)
+                    (skip_ws(consume_none(input)?), NONE, NONE, NONE)
                 }
             }
         }
@@ -601,7 +601,7 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
             if let Ok((input, alpha)) = parse_alpha_value(input) {
                 (skip_ws(input), alpha)
             } else if !legacy_syntax {
-                (skip_ws(expect_none(input)?), NONE)
+                (skip_ws(consume_none(input)?), NONE)
             } else {
                 return Err(());
             }
