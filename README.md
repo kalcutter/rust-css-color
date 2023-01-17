@@ -1,11 +1,23 @@
 # css-color
 
 Parse color strings from [CSS Color Module Level 4](https://www.w3.org/TR/css-color-4/). All legacy sRGB forms are supported:
-* RGB hexadecimal notation
-* Named colors including `transparent`
-* `rgb()` and `rgba()` functions
-* `hsl()` and `hsla()` functions
-* `hwb()` function
+* [RGB hexadecimal notations][hex].
+* [`rgb()`][rgb] and [`rgba()`][rgba] functions.
+* [`hsl()`][hsl] and [`hsla()`][hsla] functions.
+* [`hwb()`][hwb] function.
+* [Named colors][named-colors] including the [`transparent`][transparent] keyword.
+
+The [`none`][none] keyword is supported. "Missing" color components behave identically to zero.
+
+[hex]: https://www.w3.org/TR/css-color-4/#hex-notation
+[rgb]: https://www.w3.org/TR/css-color-4/#funcdef-rgb
+[rgba]: https://www.w3.org/TR/css-color-4/#funcdef-rgba
+[hsl]: https://www.w3.org/TR/css-color-4/#funcdef-hsl
+[hsla]: https://www.w3.org/TR/css-color-4/#funcdef-hsla
+[hwb]: https://www.w3.org/TR/css-color-4/#funcdef-hwb
+[named-colors]: https://www.w3.org/TR/css-color-4/#named-colors
+[transparent]: https://www.w3.org/TR/css-color-4/#transparent-color
+[none]: https://www.w3.org/TR/css-color-4/#missing
 
 ## Usage
 
@@ -13,7 +25,7 @@ First, add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-css-color = "0.2.4"
+css-color = "0.2.5"
 ```
 
 ### Example
