@@ -58,9 +58,7 @@ impl FromStr for Srgb {
 
 // https://www.w3.org/TR/css-color-4/
 fn parse_css_color(input: &[u8]) -> Result<Srgb, ()> {
-    if input.is_empty() {
-        Err(())
-    } else if let Ok(input) = consume_byte(input, b'#') {
+    if let Ok(input) = consume_byte(input, b'#') {
         parse_hex(input)
     } else if let Ok(input) = consume_function(input, b"rgb") {
         parse_rgb(input)
