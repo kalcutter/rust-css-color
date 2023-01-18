@@ -232,12 +232,15 @@ fn consume_byte(input: &[u8], b: u8) -> Result<&[u8], ()> {
     }
 }
 
+/// Consumes a function-token matching the given identifier.
+///
+/// Any whitespace following the function-token is also consumed.
 fn consume_function<'a>(input: &'a [u8], name: &[u8]) -> Result<&'a [u8], ()> {
     debug_assert!(is_ident_start(name));
 
     let n = name.len();
     if input.len() >= n + 1 && input[..n].eq_ignore_ascii_case(name) && input[n] == b'(' {
-        Ok(&input[n + 1..])
+        Ok(skip_ws(&input[n + 1..]))
     } else {
         Err(())
     }
@@ -399,8 +402,6 @@ fn parse_hex(input: &[u8]) -> Result<Srgb, ()> {
 // hsl() = hsl( [<hue> | none] [<percentage> | none] [<percentage> | none] [ / [<alpha-value> | none] ]? ) |
 //         hsl( <hue>, <percentage>, <percentage> [ , <alpha-value> ]? )
 fn parse_hsl(input: &[u8]) -> Result<Srgb, ()> {
-    let input = skip_ws(input);
-
     let (input, hue, legacy_syntax) = if let Ok((input, hue)) = parse_hue(input) {
         let input = skip_ws(input);
         match input.get(0) {
@@ -459,8 +460,6 @@ fn parse_hsl(input: &[u8]) -> Result<Srgb, ()> {
 
 // hwb() = hwb( [<hue> | none] [<percentage> | none] [<percentage> | none] [ / [<alpha-value> | none] ]? )
 fn parse_hwb(input: &[u8]) -> Result<Srgb, ()> {
-    let input = skip_ws(input);
-
     let (input, hue) = if let Ok((input, hue)) = parse_hue(input) {
         (skip_ws(input), hue)
     } else {
@@ -508,8 +507,6 @@ fn parse_hwb(input: &[u8]) -> Result<Srgb, ()> {
 //         rgb( <percentage>#{3} [ , <alpha-value> ]? )                  |
 //         rgb( <number>#{3}     [ , <alpha-value> ]? )
 fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
-    let input = skip_ws(input);
-
     let (input, red, legacy_syntax) = if let Ok((input, red)) = parse_number_or_percentage(input) {
         let input = skip_ws(input);
         match input.get(0) {
