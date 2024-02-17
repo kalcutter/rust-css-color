@@ -361,21 +361,21 @@ fn rgb() {
     );
 
     assert!(Srgb::from_str("rgb(+0 +0 +0 )").is_ok());
-    assert!(Srgb::from_str("rgb(+0 +0 +0%)").is_err());
-    assert!(Srgb::from_str("rgb(+0 +0%+0 )").is_err());
-    assert!(Srgb::from_str("rgb(+0 +0%+0%)").is_err());
-    assert!(Srgb::from_str("rgb(+0%+0 +0 )").is_err());
-    assert!(Srgb::from_str("rgb(+0%+0 +0%)").is_err());
-    assert!(Srgb::from_str("rgb(+0%+0%+0 )").is_err());
+    assert!(Srgb::from_str("rgb(+0 +0 +0%)").is_ok());
+    assert!(Srgb::from_str("rgb(+0 +0%+0 )").is_ok());
+    assert!(Srgb::from_str("rgb(+0 +0%+0%)").is_ok());
+    assert!(Srgb::from_str("rgb(+0%+0 +0 )").is_ok());
+    assert!(Srgb::from_str("rgb(+0%+0 +0%)").is_ok());
+    assert!(Srgb::from_str("rgb(+0%+0%+0 )").is_ok());
     assert!(Srgb::from_str("rgb(+0%+0%+0%)").is_ok());
 
     assert!(Srgb::from_str("rgb(-0 -0 -0 )").is_ok());
-    assert!(Srgb::from_str("rgb(-0 -0 -0%)").is_err());
-    assert!(Srgb::from_str("rgb(-0 -0%-0 )").is_err());
-    assert!(Srgb::from_str("rgb(-0 -0%-0%)").is_err());
-    assert!(Srgb::from_str("rgb(-0%-0 -0 )").is_err());
-    assert!(Srgb::from_str("rgb(-0%-0 -0%)").is_err());
-    assert!(Srgb::from_str("rgb(-0%-0%-0 )").is_err());
+    assert!(Srgb::from_str("rgb(-0 -0 -0%)").is_ok());
+    assert!(Srgb::from_str("rgb(-0 -0%-0 )").is_ok());
+    assert!(Srgb::from_str("rgb(-0 -0%-0%)").is_ok());
+    assert!(Srgb::from_str("rgb(-0%-0 -0 )").is_ok());
+    assert!(Srgb::from_str("rgb(-0%-0 -0%)").is_ok());
+    assert!(Srgb::from_str("rgb(-0%-0%-0 )").is_ok());
     assert!(Srgb::from_str("rgb(-0%-0%-0%)").is_ok());
 
     assert!(Srgb::from_str("rgb(0 ,0 ,0 )").is_ok());
@@ -462,18 +462,18 @@ fn hsl() {
     assert!(Srgb::from_str("hsla(0deg 0% 0%)").is_ok());
     assert!(Srgb::from_str("hsla(0deg 0% 0% / 0)").is_ok());
 
-    assert!(Srgb::from_str("hsl(+0 +0 +0 )").is_err());
-    assert!(Srgb::from_str("hsl(+0 +0 +0%)").is_err());
-    assert!(Srgb::from_str("hsl(+0 +0%+0 )").is_err());
+    assert!(Srgb::from_str("hsl(+0 +0 +0 )").is_ok());
+    assert!(Srgb::from_str("hsl(+0 +0 +0%)").is_ok());
+    assert!(Srgb::from_str("hsl(+0 +0%+0 )").is_ok());
     assert!(Srgb::from_str("hsl(+0 +0%+0%)").is_ok());
     assert!(Srgb::from_str("hsl(+0%+0 +0 )").is_err());
     assert!(Srgb::from_str("hsl(+0%+0 +0%)").is_err());
     assert!(Srgb::from_str("hsl(+0%+0%+0 )").is_err());
     assert!(Srgb::from_str("hsl(+0%+0%+0%)").is_err());
 
-    assert!(Srgb::from_str("hsl(-0 -0 -0 )").is_err());
-    assert!(Srgb::from_str("hsl(-0 -0 -0%)").is_err());
-    assert!(Srgb::from_str("hsl(-0 -0%-0 )").is_err());
+    assert!(Srgb::from_str("hsl(-0 -0 -0 )").is_ok());
+    assert!(Srgb::from_str("hsl(-0 -0 -0%)").is_ok());
+    assert!(Srgb::from_str("hsl(-0 -0%-0 )").is_ok());
     assert!(Srgb::from_str("hsl(-0 -0%-0%)").is_ok());
     assert!(Srgb::from_str("hsl(-0%-0 -0 )").is_err());
     assert!(Srgb::from_str("hsl(-0%-0 -0%)").is_err());
