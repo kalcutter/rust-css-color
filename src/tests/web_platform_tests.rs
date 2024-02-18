@@ -4504,21 +4504,25 @@ fn color_invalid_hsl() {
         ["hsl(none, 100%, 50%)", "The none keyword is invalid in legacy color syntax"],
         ["hsla(120, 100%, 50%, none)", "The none keyword is invalid in legacy color syntax"],
 
-        ["hsl(10, 50%, 0)", "The second and third parameters of hsl/hsla must be a percent"],
+        ["hsl(10, 50%, 0)", "The second and third parameters of hsl/hsla must be a percent in legacy color syntax"],
         ["hsl(50%, 50%, 0%)", "The first parameter of hsl/hsla must be a number or angle"],
-        ["hsl(0, 0% 0%)", "Comma optional syntax requires no commas at all"],
+        ["hsl(0, 0% 0%)", "Modern color syntax requires no commas at all"],
         ["hsl(0, 0%, light)", "Keywords are not accepted in the hsl function"],
         ["hsl()", "The hsl function requires 3 or 4 arguments"],
         ["hsl(0)", "The hsl function requires 3 or 4 arguments"],
         ["hsl(0, 0%)", "The hsl function requires 3 or 4 arguments"],
-        ["hsla(10, 50%, 0, 1)", "The second and third parameters of hsl/hsla must be a percent"],
+        ["hsl(0, 50, 30%)", "The legacy color syntax does not allow numbers for saturation"],
+        ["hsl(0, 50%, 30)", "The legacy color syntax does not allow numbers for lightness"],
+        ["hsla(10, 50%, 0, 1)", "The second and third parameters of hsl/hsla must be a percent in legacy color syntax"],
         ["hsla(50%, 50%, 0%, 1)", "The first parameter of hsl/hsla must be a number or angle"],
-        ["hsla(0, 0% 0%, 1)", "Comma optional syntax requires no commas at all"],
+        ["hsla(0, 0% 0%, 1)", "Modern color syntax requires no commas at all"],
         ["hsla(0, 0%, light, 1)", "Keywords are not accepted in the hsla function"],
         ["hsla()", "The hsla function requires 3 or 4 arguments"],
         ["hsla(0)", "The hsla function requires 3 or 4 arguments"],
         ["hsla(0, 0%)", "The hsla function requires 3 or 4 arguments"],
         ["hsla(0, 0%, 0%, 1, 0%)", "The hsla function requires 3 or 4 arguments"],
+        ["hsl(0, 50, 30%, 1)", "The legacy color syntax does not allow numbers for saturation"],
+        ["hsl(0, 50%, 30, 1)", "The legacy color syntax does not allow numbers for lightness"],
     ];
     for test in tests {
         test_invalid_value!("color", test[0], test[1]);
@@ -4531,8 +4535,8 @@ fn color_invalid_hsl() {
 fn color_invalid_hwb() {
     #[rustfmt::skip]
     let tests = [
-        ["hwba(120 30% 50%)", ""],
-        ["hwba(120 30% 50% / 0.5)", ""],
+        ["hwba(120 30% 50%)", "HWB syntax does not have the hwba function"],
+        ["hwba(120 30% 50% / 0.5)", "HWB syntax does not have the hwba function"],
 
         ["hwb(90deg, 50%, 50%)", "HWB value with commas should not be parsed"],
         ["hwb(90deg, 50%, 50%, 0.2)", "HWB value with commas should not be parsed"],
@@ -4773,6 +4777,7 @@ fn color_invalid_rgb() {
         ["rgba(0%)", "The rgba function requires 3 or 4 arguments"],
         ["rgba(0%, 0%)", "The rgba function requires 3 or 4 arguments"],
         ["rgba(0%, 0%, 0%, 0%, 0%)", "The rgba function requires 3 or 4 arguments"],
+        ["rgb(257, 0, 5 / 0)", "Cannot mix legacy and non-legacy formats"],
     ];
     for test in tests {
         test_invalid_value!("color", test[0], test[1]);
@@ -4805,6 +4810,7 @@ fn color_valid() {
 // CSS Color Level 4: Parsing and serialization of colors using valid HSL notation
 // https://github.com/web-platform-tests/wpt/blob/master/css/css-color/parsing/color-valid-hsl.html
 #[test]
+#[rustfmt::skip]
 fn color_valid_hsl() {
     test_valid_value!("color", "hsl(120 30% 50%)", "rgb(89, 166, 89)");
     test_valid_value!("color", "hsl(120 30% 50% / 0.5)", "rgba(89, 166, 89, 0.5)");
@@ -4826,6 +4832,25 @@ fn color_valid_hsl() {
     test_valid_value!("color", "hsl(120 100% 50% / 0)", "rgba(0, 255, 0, 0)");
     test_valid_value!("color", "hsl(none 100% 50%)", "rgb(255, 0, 0)");
     test_valid_value!("color", "hsl(0 100% 50%)", "rgb(255, 0, 0)");
+
+    // Test with number components.
+    test_valid_value!("color", "hsl(120 30 50)", "rgb(89, 166, 89)");
+    test_valid_value!("color", "hsl(120 30 50 / 0.5)", "rgba(89, 166, 89, 0.5)");
+    test_valid_value!("color", "hsl(120 30% 50)", "rgb(89, 166, 89)");
+    test_valid_value!("color", "hsl(120 30% 50 / 0.5)", "rgba(89, 166, 89, 0.5)");
+    test_valid_value!("color", "hsl(120 30 50%)", "rgb(89, 166, 89)");
+    test_valid_value!("color", "hsl(120 30 50% / 0.5)", "rgba(89, 166, 89, 0.5)");
+    test_valid_value!("color", "hsl(120 none 50)", "rgb(128, 128, 128)");
+    test_valid_value!("color", "hsl(120 none 50 / 0.5)", "rgba(128, 128, 128, 0.5)");
+    test_valid_value!("color", "hsl(120 30 none)", "rgb(0, 0, 0)");
+    test_valid_value!("color", "hsl(120 30 none / 0.5)", "rgba(0, 0, 0, 0.5)");
+    test_valid_value!("color", "hsl(120 30 50 / none)", "rgba(89, 166, 89, 0)");
+
+    // Test parse-time clamp of negative saturation to zero
+    test_valid_value!("color", "hsl(0 -50% 40%)", "rgb(102, 102, 102)");
+    test_valid_value!("color", "hsl(30 -50% 60)", "rgb(153, 153, 153)");
+    test_valid_value!("color", "hsl(0 -50 40%)", "rgb(102, 102, 102)");
+    test_valid_value!("color", "hsl(30 -50 60)", "rgb(153, 153, 153)");
 }
 
 // CSS Color Level 4: Parsing and serialization of colors using valid HWB notation
@@ -4849,11 +4874,25 @@ fn color_valid_hwb() {
     test_valid_value!("color", "hwb(120 30% 50% / 0)", "rgba(77, 128, 77, 0)");
     test_valid_value!("color", "hwb(none 100% 50% / none)", "rgba(170, 170, 170, 0)");
     test_valid_value!("color", "hwb(0 100% 50% / 0)", "rgba(170, 170, 170, 0)");
+
+    // Test with number components.
+    test_valid_value!("color", "hwb(120 30 50)", "rgb(77, 128, 77)");
+    test_valid_value!("color", "hwb(120 30 50 / 0.5)", "rgba(77, 128, 77, 0.5)");
+    test_valid_value!("color", "hwb(120 30% 50)", "rgb(77, 128, 77)");
+    test_valid_value!("color", "hwb(120 30% 50 / 0.5)", "rgba(77, 128, 77, 0.5)");
+    test_valid_value!("color", "hwb(120 30 50%)", "rgb(77, 128, 77)");
+    test_valid_value!("color", "hwb(120 30 50% / 0.5)", "rgba(77, 128, 77, 0.5)");
+    test_valid_value!("color", "hwb(120 none 50)", "rgb(0, 128, 0)");
+    test_valid_value!("color", "hwb(120 none 50 / 0.5)", "rgba(0, 128, 0, 0.5)");
+    test_valid_value!("color", "hwb(120 30 none)", "rgb(77, 255, 77)");
+    test_valid_value!("color", "hwb(120 30 none / 0.5)", "rgba(77, 255, 77, 0.5)");
+    test_valid_value!("color", "hwb(120 30 50 / none)", "rgba(77, 128, 77, 0)");
 }
 
 // CSS Color Level 4: Parsing and serialization of colors using valid RGB notation
 // https://github.com/web-platform-tests/wpt/blob/master/css/css-color/parsing/color-valid-rgb.html
 #[test]
+#[rustfmt::skip]
 fn color_valid_rgb() {
     test_valid_value!("color", "rgb(none none none)", "rgb(0, 0, 0)");
     test_valid_value!("color", "rgb(none none none / none)", "rgba(0, 0, 0, 0)");
@@ -4871,6 +4910,27 @@ fn color_valid_rgb() {
     test_valid_value!("color", "rgba(20% none none)", "rgb(51, 0, 0)");
     test_valid_value!("color", "rgba(20% none none / none)", "rgba(51, 0, 0, 0)");
     test_valid_value!("color", "rgba(none none none / 50%)", "rgba(0, 0, 0, 0.5)");
+    test_valid_value!("color", "rgb(-2 3 4)", "rgb(0, 3, 4)");
+    test_valid_value!("color", "rgb(-20% 20% 40%)", "rgb(0, 51, 102)");
+    test_valid_value!("color", "rgb(257 30 40)", "rgb(255, 30, 40)");
+    test_valid_value!("color", "rgb(250% 20% 40%)", "rgb(255, 51, 102)");
+    test_valid_value!("color", "rgba(-2 3 4)", "rgb(0, 3, 4)");
+    test_valid_value!("color", "rgba(-20% 20% 40%)", "rgb(0, 51, 102)");
+    test_valid_value!("color", "rgba(257 30 40)", "rgb(255, 30, 40)");
+    test_valid_value!("color", "rgba(250% 20% 40%)", "rgb(255, 51, 102)");
+    test_valid_value!("color", "rgba(-2 3 4 / .5)", "rgba(0, 3, 4, 0.5)");
+    test_valid_value!("color", "rgba(-20% 20% 40% / 50%)", "rgba(0, 51, 102, 0.5)");
+    test_valid_value!("color", "rgba(257 30 40 / 50%)", "rgba(255, 30, 40, 0.5)");
+    test_valid_value!("color", "rgba(250% 20% 40% / .5)", "rgba(255, 51, 102, 0.5)");
+
+    // Test with mixed components.
+    test_valid_value!("color", "rgb(250% 51 40%)", "rgb(255, 51, 102)");
+    test_valid_value!("color", "rgb(255 20% 102)", "rgb(255, 51, 102)");
+
+    // rgb are in the range [0, 255], alpha is in the range [0, 1].
+    // Values above or below these numbers should get resolved to the upper/lower bound.
+    test_valid_value!("color", "rgb(500, 0, 0)", "rgb(255, 0, 0)");
+    test_valid_value!("color", "rgb(-500, 64, 128)", "rgb(0, 64, 128)");
 }
 
 #[test]
