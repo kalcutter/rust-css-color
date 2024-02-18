@@ -32,67 +32,43 @@ fn readme_examples() {
     assert_eq!(lime, "lime".parse().unwrap());
 }
 
+// https://www.w3.org/TR/css-color-4/
 #[test]
 fn color4_spec_examples() {
-    // https://www.w3.org/TR/css-color-4/
-    // EXAMPLE 4
+    // EXAMPLE 5
     let lime = Srgb::from_str("lime").unwrap();
     assert_eq!(lime, Srgb::from_str("rgb(0 255 0)").unwrap());
     assert_eq!(lime, Srgb::from_str("rgb(0% 100% 0%)").unwrap());
-    // EXAMPLE 5
+    // EXAMPLE 6-7
     assert_eq!(
-        Srgb::from_str("HsL(39 100% 50%)").unwrap(),
-        Srgb::from_str("hsl(39 100% 50%)").unwrap(),
+        Srgb::from_str("rgb(100% 0% 0% / 50%)").unwrap(),
+        Srgb::from_str("rgba(100%, 0%, 0%, 0.5)").unwrap()
     );
+    // EXAMPLE 10
     assert_eq!(
-        Srgb::from_str("pUrPlE").unwrap(),
-        Srgb::from_str("purple").unwrap(),
+        Srgb::from_str("#00ff00").unwrap(),
+        Srgb::from_str("rgb(0 255 0)").unwrap()
     );
-    // EXAMPLE 6
-    assert_color_approx_eq(
-        Srgb::from_str("hsl(38.824 100% 50%)").unwrap(),
-        Srgb::from_str("rgb(255, 165, 0)").unwrap(),
+    // EXAMPLE 11
+    assert_eq!(
+        Srgb::from_str("#0000ffcc").unwrap(),
+        Srgb::from_str("rgb(0 0 100% / 80%)").unwrap()
     );
     // EXAMPLE 12
     assert_eq!(
-        Srgb::from_str("rgb(29 164 192 / 95%)").unwrap(),
-        Srgb::from_str("rgba(29, 164, 192, 0.95)").unwrap(),
-    );
-    // EXAMPLE 13
-    assert_color_approx_eq(
-        Srgb::from_str("rgb(146.064 107.457 131.223)").unwrap(),
-        Srgb::from_str("rgb(57.28% 42.14% 51.46%)").unwrap(),
-    );
-    // EXAMPLE 14
-    assert_eq!(
-        Srgb::from_str("goldenrod").unwrap(),
-        Srgb::from_str("rgb(218, 165, 32)").unwrap(),
-    );
-    // EXAMPLE 24
-    assert_eq!(
-        Srgb::from_str("#00ff00").unwrap(),
-        Srgb::from_str("rgb(0 255 0)").unwrap(),
-    );
-    // EXAMPLE 25
-    assert_eq!(
-        Srgb::from_str("#0000ffcc").unwrap(),
-        Srgb::from_str("rgb(0% 0% 100% / 80%)").unwrap(),
-    );
-    // EXAMPLE 26
-    assert_eq!(
         Srgb::from_str("#123").unwrap(),
-        Srgb::from_str("#112233").unwrap(),
+        Srgb::from_str("#112233").unwrap()
     );
-    // EXAMPLE 31
+    // EXAMPLE 17
     let red = Srgb::from_str("red").unwrap();
     assert_eq!(red, Srgb::from_str("#f00").unwrap());
     assert_eq!(red, Srgb::from_str("hsl(0deg 100% 50%)").unwrap());
-    // EXAMPLE 32
+    // EXAMPLE 18
     assert!(Srgb::from_str("hsl(120deg 100% 50%)").is_ok());
     assert!(Srgb::from_str("hsl(120deg 100% 25%)").is_ok());
     assert!(Srgb::from_str("hsl(120deg 100% 75%)").is_ok());
     assert!(Srgb::from_str("hsl(120deg 75% 85%)").is_ok());
-    // EXAMPLE 33
+    // EXAMPLE 19
     assert_eq!(
         Srgb::from_str("blue").unwrap(),
         Srgb::from_str("hsl(240deg 100% 50%)").unwrap(),
@@ -101,23 +77,76 @@ fn color4_spec_examples() {
         Srgb::from_str("yellow").unwrap(),
         Srgb::from_str("hsl(60deg 100% 50%)").unwrap(),
     );
-    // EXAMPLE 34
+    // EXAMPLE 20
     assert!(Srgb::from_str("hsl(220deg 100% 50%)").is_ok());
     assert!(Srgb::from_str("hsl(250deg 100% 50%)").is_ok());
     assert!(Srgb::from_str("hsl(50deg 100% 50%)").is_ok());
     assert!(Srgb::from_str("hsl(80deg 100% 50%)").is_ok());
-    // EXAMPLE 40
+    // EXAMPLE 21
+    assert_color_approx_eq(
+        Srgb::from_str("hwb(150 20% 10%)").unwrap(),
+        Srgb::from_str("hsl(150 77.78% 55%)").unwrap(),
+    );
+    assert_color_approx_eq(
+        Srgb::from_str("hwb(150 20% 10%)").unwrap(),
+        Srgb::from_str("rgb(20% 90% 55%)").unwrap(),
+    );
+    // EXAMPLE 22
+    assert_color_approx_eq(
+        Srgb::from_str("hwb(45 40% 80%)").unwrap(),
+        Srgb::from_str("rgb(33.33% 33.33% 33.33%)").unwrap(),
+    );
+    // EXAMPLE 30
     assert_color_approx_eq(
         Srgb::from_str("#7654CD").unwrap(),
         Srgb::from_str("rgb(46.27% 32.94% 80.39%)").unwrap(),
     );
-    // EXAMPLE 47
-    assert_eq!(
-        Srgb::from_str("rgb(178 34 34)").unwrap(),
-        Srgb::from_str("firebrick").unwrap(),
-    );
+    // EXAMPLE 35
+    assert!(Srgb::from_str("rgb(24% 12% 98% / 0.4)").is_ok());
+    assert!(Srgb::from_str("rgb(62% 26% 64% / 0.6)").is_ok());
+    assert!(Srgb::from_str("rgb(46.8% 20.4% 77.6% / 0.5)").is_ok());
+    // EXAMPLE 36-37
+    assert!(Srgb::from_str("rgb(76% 62% 03% / 0.4)").is_ok());
     // EXAMPLE 48
-    assert!(Srgb::from_str("rgb(70.690% 26.851% 19.724%)").is_ok());
+    assert_eq!(
+        Srgb::from_str("pUrPlE").unwrap(),
+        Srgb::from_str("purple").unwrap(),
+    );
+    // EXAMPLE 49
+    assert!(Srgb::from_str("rgb(128 127 255)").is_ok());
+    // EXAMPLE 50
+    assert!(Srgb::from_str("rgb(255 165.2 0)").is_ok());
+    // EXAMPLE 51
+    assert!(Srgb::from_str("rgb(255 127 0)").is_ok());
+    // EXAMPLE 52
+    assert_color_approx_eq(
+        Srgb::from_str("hsl(38.824 100% 50%)").unwrap(),
+        Srgb::from_str("rgb(255, 165, 0)").unwrap(),
+    );
+    // EXAMPLE 63
+    assert_eq!(
+        Srgb::from_str("rgb(29 164 192 / 95%)").unwrap(),
+        Srgb::from_str("rgba(29, 164, 192, 0.95)").unwrap(),
+    );
+    // EXAMPLE 64
+    assert_color_approx_eq(
+        Srgb::from_str("hwb(740deg 20% 30% / 50%)").unwrap(),
+        Srgb::from_str("hwb(20 20% 30% / 50%)").unwrap(),
+    );
+    assert_color_approx_eq(
+        Srgb::from_str("hwb(20 20% 30% / 50%)").unwrap(),
+        Srgb::from_str("rgba(178.5, 93.5, 51, 0.5)").unwrap(),
+    );
+    // EXAMPLE 65
+    assert_color_approx_eq(
+        Srgb::from_str("rgb(146.064 107.457 131.223)").unwrap(),
+        Srgb::from_str("rgb(57.28% 42.14% 51.46%)").unwrap(),
+    );
+    // EXAMPLE 66
+    assert_eq!(
+        Srgb::from_str("goldenrod").unwrap(),
+        Srgb::from_str("rgb(218, 165, 32)").unwrap(),
+    );
 }
 
 #[test]
