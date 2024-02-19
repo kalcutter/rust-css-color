@@ -23,7 +23,7 @@ First, add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-css-color = "0.2.7"
+css-color = "0.2.8"
 ```
 
 ### Example
