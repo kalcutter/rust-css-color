@@ -802,11 +802,9 @@ fn bench_hex(b: &mut test::Bencher) {
 #[bench]
 fn bench_rgb(b: &mut test::Bencher) {
     let inputs = [
-        "rgb(none none none)",
         "rgb(0, 0, 0)",
         "rgb(none none none / none)",
         "rgba(0, 0, 0, 0)",
-        "rgb(128 none none)",
         "rgb(128, 0, 0)",
         "rgb(128 none none / none)",
         "rgba(128, 0, 0, 0)",
@@ -818,11 +816,9 @@ fn bench_rgb(b: &mut test::Bencher) {
         "rgba(51, 0, 0, 0)",
         "rgb(none none none / 50%)",
         "rgba(0, 0, 0, 0.5)",
-        "rgba(none none none)",
         "rgb(0, 0, 0)",
         "rgba(none none none / none)",
         "rgba(0, 0, 0, 0)",
-        "rgba(128 none none)",
         "rgb(128, 0, 0)",
         "rgba(128 none none / none)",
         "rgba(128, 0, 0, 0)",
