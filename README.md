@@ -1,5 +1,13 @@
 # css-color
 
+[![crates.io-badge]][crates.io] [![docs-badge]][docs.rs] [![license-badge]][license]
+
+[crates.io-badge]: https://img.shields.io/crates/v/css-color
+[crates.io]: https://crates.io/crates/css-color
+[docs-badge]: https://img.shields.io/docsrs/css-color
+[docs.rs]: https://docs.rs/css-color
+[license-badge]: https://img.shields.io/crates/l/css-color
+
 Parse color strings from [CSS Color Module Level 4](https://www.w3.org/TR/css-color-4/). All legacy sRGB forms are supported:
 * [RGB hexadecimal notations][hex].
 * [`rgb()`][rgb] and [`rgba()`][rgb] functions.
