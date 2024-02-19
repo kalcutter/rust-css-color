@@ -323,41 +323,38 @@ fn parse_percentage(input: &[u8]) -> Result<(&[u8], f32), ()> {
 }
 
 enum NumberOrPercentage {
-    Number(f32),
-    Percentage(f32),
-}
-
-impl NumberOrPercentage {
-    pub fn get(&self) -> f32 {
-        match self {
-            Number(n) => *n,
-            Percentage(p) => *p,
-        }
-    }
-
-    pub fn frac(&self, denom: f32) -> f32 {
-        match self {
-            Number(n) => *n / denom,
-            Percentage(p) => *p,
-        }
-    }
+    Number,
+    Percentage,
 }
 use NumberOrPercentage::*;
 
-fn parse_number_or_percentage(input: &[u8]) -> Result<(&[u8], NumberOrPercentage), ()> {
+trait Frac {
+    fn frac(&self, denom: f32) -> f32;
+}
+
+impl Frac for (NumberOrPercentage, f32) {
+    fn frac(&self, denom: f32) -> f32 {
+        match self.0 {
+            Number => self.1 / denom,
+            Percentage => self.1,
+        }
+    }
+}
+
+fn parse_number_or_percentage(input: &[u8]) -> Result<(&[u8], (NumberOrPercentage, f32)), ()> {
     let (input, value) = parse_number(input)?;
 
     if let Ok(input) = consume_byte(input, b'%') {
-        Ok((input, Percentage(value / 100.)))
+        Ok((input, (Percentage, value / 100.)))
     } else {
-        Ok((input, Number(value)))
+        Ok((input, (Number, value)))
     }
 }
 
 // <alpha-value> = <number> | <percentage>
 fn parse_alpha_value(input: &[u8]) -> Result<(&[u8], f32), ()> {
-    let (input, alpha) = parse_number_or_percentage(input)?;
-    Ok((input, clamp_unit_f32(alpha.get())))
+    let (input, (_, alpha)) = parse_number_or_percentage(input)?;
+    Ok((input, clamp_unit_f32(alpha)))
 }
 
 // <hue> = <number> | <angle>
@@ -547,7 +544,7 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
 
     let (input, red, green, blue) = if legacy_syntax {
         match red.unwrap() {
-            Number(red) => {
+            (Number, red) => {
                 let (mut input, green) = parse_number(input)?;
                 input = skip_ws(input);
                 input = skip_ws(consume_byte(input, b',')?);
@@ -555,7 +552,7 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
                 input = skip_ws(input);
                 (input, red / 255., green / 255., blue / 255.)
             }
-            Percentage(red) => {
+            (Percentage, red) => {
                 let (mut input, green) = parse_percentage(input)?;
                 input = skip_ws(input);
                 input = skip_ws(consume_byte(input, b',')?);
