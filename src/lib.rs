@@ -319,46 +319,42 @@ fn parse_number(input: &[u8]) -> Result<(&[u8], f32), ()> {
 fn parse_percentage(input: &[u8]) -> Result<(&[u8], f32), ()> {
     let (input, value) = parse_number(input)?;
     let input = consume_byte(input, b'%')?;
-
     Ok((input, value / 100.))
 }
 
-fn parse_number_percentage(input: &[u8]) -> Result<(&[u8], f32), ()> {
-    let (input, value) = parse_number(input)?;
+enum NumberOrPercentage {
+    Number,
+    Percentage,
+}
+use NumberOrPercentage::*;
 
-    if let Ok(input) = consume_byte(input, b'%') {
-        Ok((input, value / 100.))
-    } else {
-        Ok((input, value / 100.))
+trait Frac {
+    fn frac(&self, denom: f32) -> f32;
+}
+
+impl Frac for (NumberOrPercentage, f32) {
+    fn frac(&self, denom: f32) -> f32 {
+        match self.0 {
+            Number => self.1 / denom,
+            Percentage => self.1,
+        }
     }
 }
 
-enum NumberOrPercentage {
-    Number(f32),
-    Percentage(f32),
-}
-use self::NumberOrPercentage::*;
-
-fn parse_number_or_percentage(input: &[u8]) -> Result<(&[u8], NumberOrPercentage), ()> {
+fn parse_number_or_percentage(input: &[u8]) -> Result<(&[u8], (NumberOrPercentage, f32)), ()> {
     let (input, value) = parse_number(input)?;
 
     if let Ok(input) = consume_byte(input, b'%') {
-        Ok((input, Percentage(value / 100.)))
+        Ok((input, (Percentage, value / 100.)))
     } else {
-        Ok((input, Number(value)))
+        Ok((input, (Number, value)))
     }
 }
 
 // <alpha-value> = <number> | <percentage>
 fn parse_alpha_value(input: &[u8]) -> Result<(&[u8], f32), ()> {
-    let (input, alpha) = parse_number_or_percentage(input)?;
-    let alpha = match alpha {
-        Number(value) => value,
-        Percentage(value) => value,
-    };
-    let alpha = clamp_unit_f32(alpha);
-
-    Ok((input, alpha))
+    let (input, (_, alpha)) = parse_number_or_percentage(input)?;
+    Ok((input, clamp_unit_f32(alpha)))
 }
 
 // <hue> = <number> | <angle>
@@ -440,13 +436,14 @@ fn parse_hsl(input: &[u8]) -> Result<Srgb, ()> {
         input = skip_ws(input);
         (input, saturation, lightness)
     } else {
-        let (input, saturation) = if let Ok((input, saturation)) = parse_number_percentage(input) {
-            (skip_ws(input), saturation)
+        let (input, saturation) = if let Ok((input, saturation)) = parse_number_or_percentage(input)
+        {
+            (skip_ws(input), saturation.frac(100.))
         } else {
             (skip_ws(consume_none(input)?), NONE)
         };
-        let (input, lightness) = if let Ok((input, lightness)) = parse_number_percentage(input) {
-            (skip_ws(input), lightness)
+        let (input, lightness) = if let Ok((input, lightness)) = parse_number_or_percentage(input) {
+            (skip_ws(input), lightness.frac(100.))
         } else {
             (skip_ws(consume_none(input)?), NONE)
         };
@@ -490,14 +487,14 @@ fn parse_hwb(input: &[u8]) -> Result<Srgb, ()> {
         (skip_ws(consume_none(input)?), NONE)
     };
 
-    let (input, whiteness) = if let Ok((input, whiteness)) = parse_number_percentage(input) {
-        (skip_ws(input), whiteness)
+    let (input, whiteness) = if let Ok((input, whiteness)) = parse_number_or_percentage(input) {
+        (skip_ws(input), whiteness.frac(100.))
     } else {
         (skip_ws(consume_none(input)?), NONE)
     };
 
-    let (input, blackness) = if let Ok((input, blackness)) = parse_number_percentage(input) {
-        (skip_ws(input), blackness)
+    let (input, blackness) = if let Ok((input, blackness)) = parse_number_or_percentage(input) {
+        (skip_ws(input), blackness.frac(100.))
     } else {
         (skip_ws(consume_none(input)?), NONE)
     };
@@ -547,7 +544,7 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
 
     let (input, red, green, blue) = if legacy_syntax {
         match red.unwrap() {
-            Number(red) => {
+            (Number, red) => {
                 let (mut input, green) = parse_number(input)?;
                 input = skip_ws(input);
                 input = skip_ws(consume_byte(input, b',')?);
@@ -555,7 +552,7 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
                 input = skip_ws(input);
                 (input, red / 255., green / 255., blue / 255.)
             }
-            Percentage(red) => {
+            (Percentage, red) => {
                 let (mut input, green) = parse_percentage(input)?;
                 input = skip_ws(input);
                 input = skip_ws(consume_byte(input, b',')?);
@@ -565,26 +562,14 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
             }
         }
     } else {
-        let red = match red {
-            Some(Number(red)) => red / 255.,
-            Some(Percentage(red)) => red,
-            None => NONE,
-        };
+        let red = red.map_or(NONE, |red| red.frac(255.));
         let (input, green) = if let Ok((input, green)) = parse_number_or_percentage(input) {
-            let green = match green {
-                Number(green) => green / 255.,
-                Percentage(green) => green,
-            };
-            (skip_ws(input), green)
+            (skip_ws(input), green.frac(255.))
         } else {
             (skip_ws(consume_none(input)?), NONE)
         };
         let (input, blue) = if let Ok((input, blue)) = parse_number_or_percentage(input) {
-            let blue = match blue {
-                Number(blue) => blue / 255.,
-                Percentage(blue) => blue,
-            };
-            (skip_ws(input), blue)
+            (skip_ws(input), blue.frac(255.))
         } else {
             (skip_ws(consume_none(input)?), NONE)
         };
