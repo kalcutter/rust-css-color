@@ -329,7 +329,7 @@ enum NumberOrPercentage {
 }
 
 impl NumberOrPercentage {
-    pub fn value(&self, denom: f32) -> f32 {
+    pub fn frac(&self, denom: f32) -> f32 {
         match self {
             Number(n) => *n / denom,
             Percentage(p) => *p,
@@ -355,9 +355,7 @@ fn parse_alpha_value(input: &[u8]) -> Result<(&[u8], f32), ()> {
         Number(value) => value,
         Percentage(value) => value,
     };
-    let alpha = clamp_unit_f32(alpha);
-
-    Ok((input, alpha))
+    Ok((input, clamp_unit_f32(alpha)))
 }
 
 // <hue> = <number> | <angle>
@@ -441,12 +439,12 @@ fn parse_hsl(input: &[u8]) -> Result<Srgb, ()> {
     } else {
         let (input, saturation) = if let Ok((input, saturation)) = parse_number_or_percentage(input)
         {
-            (skip_ws(input), saturation.value(100.))
+            (skip_ws(input), saturation.frac(100.))
         } else {
             (skip_ws(consume_none(input)?), NONE)
         };
         let (input, lightness) = if let Ok((input, lightness)) = parse_number_or_percentage(input) {
-            (skip_ws(input), lightness.value(100.))
+            (skip_ws(input), lightness.frac(100.))
         } else {
             (skip_ws(consume_none(input)?), NONE)
         };
@@ -491,13 +489,13 @@ fn parse_hwb(input: &[u8]) -> Result<Srgb, ()> {
     };
 
     let (input, whiteness) = if let Ok((input, whiteness)) = parse_number_or_percentage(input) {
-        (skip_ws(input), whiteness.value(100.))
+        (skip_ws(input), whiteness.frac(100.))
     } else {
         (skip_ws(consume_none(input)?), NONE)
     };
 
     let (input, blackness) = if let Ok((input, blackness)) = parse_number_or_percentage(input) {
-        (skip_ws(input), blackness.value(100.))
+        (skip_ws(input), blackness.frac(100.))
     } else {
         (skip_ws(consume_none(input)?), NONE)
     };
@@ -565,14 +563,14 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
             }
         }
     } else {
-        let red = red.map_or(NONE, |red| red.value(255.));
+        let red = red.map_or(NONE, |red| red.frac(255.));
         let (input, green) = if let Ok((input, green)) = parse_number_or_percentage(input) {
-            (skip_ws(input), green.value(255.))
+            (skip_ws(input), green.frac(255.))
         } else {
             (skip_ws(consume_none(input)?), NONE)
         };
         let (input, blue) = if let Ok((input, blue)) = parse_number_or_percentage(input) {
-            (skip_ws(input), blue.value(255.))
+            (skip_ws(input), blue.frac(255.))
         } else {
             (skip_ws(consume_none(input)?), NONE)
         };
