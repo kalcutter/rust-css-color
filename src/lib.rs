@@ -323,21 +323,20 @@ fn parse_percentage(input: &[u8]) -> Result<(&[u8], f32), ()> {
     Ok((input, value / 100.))
 }
 
-fn parse_number_percentage(input: &[u8]) -> Result<(&[u8], f32), ()> {
-    let (input, value) = parse_number(input)?;
-
-    if let Ok(input) = consume_byte(input, b'%') {
-        Ok((input, value / 100.))
-    } else {
-        Ok((input, value / 100.))
-    }
-}
-
 enum NumberOrPercentage {
     Number(f32),
     Percentage(f32),
 }
-use self::NumberOrPercentage::*;
+
+impl NumberOrPercentage {
+    pub fn value(&self, denom: f32) -> f32 {
+        match self {
+            Number(n) => *n / denom,
+            Percentage(p) => *p,
+        }
+    }
+}
+use NumberOrPercentage::*;
 
 fn parse_number_or_percentage(input: &[u8]) -> Result<(&[u8], NumberOrPercentage), ()> {
     let (input, value) = parse_number(input)?;
@@ -440,13 +439,14 @@ fn parse_hsl(input: &[u8]) -> Result<Srgb, ()> {
         input = skip_ws(input);
         (input, saturation, lightness)
     } else {
-        let (input, saturation) = if let Ok((input, saturation)) = parse_number_percentage(input) {
-            (skip_ws(input), saturation)
+        let (input, saturation) = if let Ok((input, saturation)) = parse_number_or_percentage(input)
+        {
+            (skip_ws(input), saturation.value(100.))
         } else {
             (skip_ws(consume_none(input)?), NONE)
         };
-        let (input, lightness) = if let Ok((input, lightness)) = parse_number_percentage(input) {
-            (skip_ws(input), lightness)
+        let (input, lightness) = if let Ok((input, lightness)) = parse_number_or_percentage(input) {
+            (skip_ws(input), lightness.value(100.))
         } else {
             (skip_ws(consume_none(input)?), NONE)
         };
@@ -490,14 +490,14 @@ fn parse_hwb(input: &[u8]) -> Result<Srgb, ()> {
         (skip_ws(consume_none(input)?), NONE)
     };
 
-    let (input, whiteness) = if let Ok((input, whiteness)) = parse_number_percentage(input) {
-        (skip_ws(input), whiteness)
+    let (input, whiteness) = if let Ok((input, whiteness)) = parse_number_or_percentage(input) {
+        (skip_ws(input), whiteness.value(100.))
     } else {
         (skip_ws(consume_none(input)?), NONE)
     };
 
-    let (input, blackness) = if let Ok((input, blackness)) = parse_number_percentage(input) {
-        (skip_ws(input), blackness)
+    let (input, blackness) = if let Ok((input, blackness)) = parse_number_or_percentage(input) {
+        (skip_ws(input), blackness.value(100.))
     } else {
         (skip_ws(consume_none(input)?), NONE)
     };
@@ -565,26 +565,14 @@ fn parse_rgb(input: &[u8]) -> Result<Srgb, ()> {
             }
         }
     } else {
-        let red = match red {
-            Some(Number(red)) => red / 255.,
-            Some(Percentage(red)) => red,
-            None => NONE,
-        };
+        let red = red.map_or(NONE, |red| red.value(255.));
         let (input, green) = if let Ok((input, green)) = parse_number_or_percentage(input) {
-            let green = match green {
-                Number(green) => green / 255.,
-                Percentage(green) => green,
-            };
-            (skip_ws(input), green)
+            (skip_ws(input), green.value(255.))
         } else {
             (skip_ws(consume_none(input)?), NONE)
         };
         let (input, blue) = if let Ok((input, blue)) = parse_number_or_percentage(input) {
-            let blue = match blue {
-                Number(blue) => blue / 255.,
-                Percentage(blue) => blue,
-            };
-            (skip_ws(input), blue)
+            (skip_ws(input), blue.value(255.))
         } else {
             (skip_ws(consume_none(input)?), NONE)
         };
