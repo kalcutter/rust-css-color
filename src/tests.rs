@@ -801,10 +801,77 @@ fn bench_hex(b: &mut test::Bencher) {
 #[cfg(feature = "bench")]
 #[bench]
 fn bench_rgb(b: &mut test::Bencher) {
-    let input = "rgb(100% 100% 100% / 1.0)";
+    let inputs = [
+        "rgb(none none none)",
+        "rgb(0, 0, 0)",
+        "rgb(none none none / none)",
+        "rgba(0, 0, 0, 0)",
+        "rgb(128 none none)",
+        "rgb(128, 0, 0)",
+        "rgb(128 none none / none)",
+        "rgba(128, 0, 0, 0)",
+        "rgb(none none none / .5)",
+        "rgba(0, 0, 0, 0.5)",
+        "rgb(20% none none)",
+        "rgb(51, 0, 0)",
+        "rgb(20% none none / none)",
+        "rgba(51, 0, 0, 0)",
+        "rgb(none none none / 50%)",
+        "rgba(0, 0, 0, 0.5)",
+        "rgba(none none none)",
+        "rgb(0, 0, 0)",
+        "rgba(none none none / none)",
+        "rgba(0, 0, 0, 0)",
+        "rgba(128 none none)",
+        "rgb(128, 0, 0)",
+        "rgba(128 none none / none)",
+        "rgba(128, 0, 0, 0)",
+        "rgba(none none none / .5)",
+        "rgba(0, 0, 0, 0.5)",
+        "rgba(20% none none)",
+        "rgb(51, 0, 0)",
+        "rgba(20% none none / none)",
+        "rgba(51, 0, 0, 0)",
+        "rgba(none none none / 50%)",
+        "rgba(0, 0, 0, 0.5)",
+        "rgb(-2 3 4)",
+        "rgb(0, 3, 4)",
+        "rgb(-20% 20% 40%)",
+        "rgb(0, 51, 102)",
+        "rgb(257 30 40)",
+        "rgb(255, 30, 40)",
+        "rgb(250% 20% 40%)",
+        "rgb(255, 51, 102)",
+        "rgba(-2 3 4)",
+        "rgb(0, 3, 4)",
+        "rgba(-20% 20% 40%)",
+        "rgb(0, 51, 102)",
+        "rgba(257 30 40)",
+        "rgb(255, 30, 40)",
+        "rgba(250% 20% 40%)",
+        "rgb(255, 51, 102)",
+        "rgba(-2 3 4 / .5)",
+        "rgba(0, 3, 4, 0.5)",
+        "rgba(-20% 20% 40% / 50%)",
+        "rgba(0, 51, 102, 0.5)",
+        "rgba(257 30 40 / 50%)",
+        "rgba(255, 30, 40, 0.5)",
+        "rgba(250% 20% 40% / .5)",
+        "rgba(255, 51, 102, 0.5)",
+        "rgb(250% 51 40%)",
+        "rgb(255, 51, 102)",
+        "rgb(255 20% 102)",
+        "rgb(255, 51, 102)",
+        "rgb(500, 0, 0)",
+        "rgb(255, 0, 0)",
+        "rgb(-500, 64, 128)",
+        "rgb(0, 64, 128)",
+    ];
     b.iter(|| {
-        let result = Srgb::from_str(test::black_box(&input));
-        let _ = test::black_box(result);
+        for input in inputs {
+            let result = Srgb::from_str(test::black_box(input));
+            let _ = test::black_box(result);
+        }
     })
 }
 
@@ -821,20 +888,40 @@ fn bench_rgb_exp(b: &mut test::Bencher) {
 #[cfg(feature = "bench")]
 #[bench]
 fn bench_hsl(b: &mut test::Bencher) {
-    let input = "hsl(0deg 100% 50% / 1.0)";
+    let inputs = [
+        "hsl(120 100% 25%)",
+        "hsl(120deg 100% 25%)",
+        "hsl(120 100% 25% / 1.0)",
+        "hsl(120deg 100% 25% / 1)",
+        "hsl(120 100% 25% / 100%)",
+        "hsl(120deg 100% 25% / 100%)",
+        "hsl(120, 100%, 25%, 100%)",
+        "hsl(120deg, 100%, 25%, 100%)",
+    ];
     b.iter(|| {
-        let result = Srgb::from_str(test::black_box(&input));
-        let _ = test::black_box(result);
+        for input in inputs {
+            let result = Srgb::from_str(test::black_box(input));
+            let _ = test::black_box(result);
+        }
     })
 }
 
 #[cfg(feature = "bench")]
 #[bench]
 fn bench_hwb(b: &mut test::Bencher) {
-    let input = "hwb(0deg 0% 0% / 1.0)";
+    let inputs = [
+        "hwb(0deg 0% 0% / 1.0)",
+        "hwb(120 0% 49.8039%)",
+        "hwb(0 0% 100%)",
+        "hwb(0 100% 100%)",
+        "hwb(120 20% 30%)",
+        "hwb(120 70% 60%)",
+    ];
     b.iter(|| {
-        let result = Srgb::from_str(test::black_box(&input));
-        let _ = test::black_box(result);
+        for input in inputs {
+            let result = Srgb::from_str(test::black_box(input));
+            let _ = test::black_box(result);
+        }
     })
 }
 
