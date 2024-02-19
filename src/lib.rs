@@ -79,7 +79,7 @@ fn parse_css_color(input: &[u8]) -> Result<Srgb, ()> {
 }
 
 fn clamp_unit_f32(value: f32) -> f32 {
-    value.max(0.).min(1.)
+    value.clamp(0., 1.)
 }
 
 fn normalize_hue(value: f32) -> f32 {
