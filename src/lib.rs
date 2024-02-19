@@ -319,7 +319,6 @@ fn parse_number(input: &[u8]) -> Result<(&[u8], f32), ()> {
 fn parse_percentage(input: &[u8]) -> Result<(&[u8], f32), ()> {
     let (input, value) = parse_number(input)?;
     let input = consume_byte(input, b'%')?;
-
     Ok((input, value / 100.))
 }
 
@@ -329,6 +328,13 @@ enum NumberOrPercentage {
 }
 
 impl NumberOrPercentage {
+    pub fn get(&self) -> f32 {
+        match self {
+            Number(n) => *n,
+            Percentage(p) => *p,
+        }
+    }
+
     pub fn frac(&self, denom: f32) -> f32 {
         match self {
             Number(n) => *n / denom,
@@ -351,11 +357,7 @@ fn parse_number_or_percentage(input: &[u8]) -> Result<(&[u8], NumberOrPercentage
 // <alpha-value> = <number> | <percentage>
 fn parse_alpha_value(input: &[u8]) -> Result<(&[u8], f32), ()> {
     let (input, alpha) = parse_number_or_percentage(input)?;
-    let alpha = match alpha {
-        Number(value) => value,
-        Percentage(value) => value,
-    };
-    Ok((input, clamp_unit_f32(alpha)))
+    Ok((input, clamp_unit_f32(alpha.get())))
 }
 
 // <hue> = <number> | <angle>
