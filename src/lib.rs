@@ -65,14 +65,14 @@ fn parse_css_color(input: &[u8]) -> Result<Srgb, ()> {
         parse_hex(input)
     } else if let Ok(input) = consume_function(input, b"rgb") {
         parse_rgb(input)
-    } else if let Ok(input) = consume_function(input, b"rgba") {
-        parse_rgb(input)
     } else if let Ok(input) = consume_function(input, b"hsl") {
-        parse_hsl(input)
-    } else if let Ok(input) = consume_function(input, b"hsla") {
         parse_hsl(input)
     } else if let Ok(input) = consume_function(input, b"hwb") {
         parse_hwb(input)
+    } else if let Ok(input) = consume_function(input, b"rgba") {
+        parse_rgb(input)
+    } else if let Ok(input) = consume_function(input, b"hsla") {
+        parse_hsl(input)
     } else {
         parse_named(input)
     }
