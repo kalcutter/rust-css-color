@@ -1,6 +1,5 @@
 use super::color_f32_to_u8;
 use crate::{ParseColorError, Srgb};
-use once_cell::sync::Lazy;
 use regex::Regex;
 use std::str::FromStr;
 
@@ -14,8 +13,10 @@ fn computed_value(srgb: Srgb) -> Srgb {
 }
 
 fn color_from_css(css: &str) -> Result<Srgb, ParseColorError> {
-    static COMMENT: Lazy<Regex> = Lazy::new(|| Regex::new(r"/\*.*?\*/").unwrap());
-    Srgb::from_str(&COMMENT.replace_all(css, " "))
+    thread_local! {
+        static COMMENT: Regex = Regex::new(r"/\*.*?\*/").unwrap();
+    }
+    COMMENT.with(|comment| Srgb::from_str(&comment.replace_all(css, " ")))
 }
 
 macro_rules! test_computed_value {
