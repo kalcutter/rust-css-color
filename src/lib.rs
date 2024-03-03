@@ -96,16 +96,15 @@ struct Hsla {
 // https://www.w3.org/TR/css-color-4/#hsl-to-rgb
 impl From<Hsla> for Srgb {
     fn from(hsla: Hsla) -> Self {
-        let f = |n: f32| {
-            let h = n + hsla.hue * 12.;
-            let k = if h >= 12. { h - 12. } else { h };
+        let f = |k: f32| {
             let a = hsla.saturation * f32::min(hsla.lightness, 1. - hsla.lightness);
             return hsla.lightness - a * f32::max(-1., f32::min(k - 3., f32::min(9. - k, 1.)));
         };
+        let h = hsla.hue * 12.;
         Srgb {
-            red: f(0.),
-            green: f(8.),
-            blue: f(4.),
+            red: f(h),
+            green: f(if h + 8. >= 12. { h - 4. } else { h + 8. }),
+            blue: f(if h + 4. >= 12. { h - 8. } else { h + 4. }),
             alpha: hsla.alpha,
         }
     }
